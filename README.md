@@ -44,13 +44,25 @@ Tablas: `users`, `pregnancies`, `weeks`, `appointments`, `reminders`,
 ```bash
 npm install
 npm run dev          # servidor con recarga automatica en :4001
-npm start            # servidor normal
+npm start            # servidor normal, sin recarga
 npm test             # 24 pruebas unitarias
 npm run test:api     # prueba de humo contra el servidor corriendo
 npm run db:reset     # borra la base de datos
 npm run db:seed      # recarga las 40 semanas
 npm run check:copy   # revisa que los textos en espanol no esten corruptos
 ```
+
+`npm run dev` usa un watcher propio (`scripts/dev.mjs`) que ignora
+`node_modules` y la base de datos, para que no se reinicie en bucle.
+
+Si el puerto 4001 esta ocupado, el servidor lo detecta, imprime el PID que lo
+ocupa y la forma de liberarlo, en lugar de mostrar un error largo.
+
+## Iniciar sesion
+
+No hay usuario predeterminado. Registrate en el frontend con cualquier correo
+valido y una contrasena de 6 caracteres o mas. Los usuarios se guardan en
+`data/babytrack.sqlite`.
 
 ## Configuracion
 
