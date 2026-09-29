@@ -73,7 +73,7 @@ incluida la IA en modo local.
 | --- | --- | --- |
 | `PORT` | `4001` | Puerto del servidor |
 | `JWT_SECRET` | valor de desarrollo | Cambiar en produccion |
-| `CORS_ORIGIN` | `http://localhost:5173` | Origenes permitidos |
+| `CORS_ORIGIN` | `http://localhost:5180` | Origenes permitidos |
 | `DATABASE_FILE` | `./data/babytrack.sqlite` | Ruta de la base de datos |
 | `AI_PROVIDER` | `auto` | `auto`, `openai` o `local` |
 | `OPENAI_API_KEY` | vacio | Si falta, se usa el proveedor local |

@@ -50,18 +50,24 @@ function restart() {
   }
 
   restarting = true;
-  child.once('exit', () => {
+
+  // Keep a reference to the process being replaced. The global `child` will
+  // point to the replacement once it starts, so the force kill below must not
+  // read from it or it would terminate the new process.
+  const previous = child;
+
+  previous.once('exit', () => {
     if (pending) {
       pending = false;
       setTimeout(start, 100);
     }
   });
 
-  child.kill('SIGTERM');
+  previous.kill('SIGTERM');
 
   setTimeout(() => {
-    if (child) {
-      child.kill('SIGKILL');
+    if (previous.exitCode === null && previous.signalCode === null) {
+      previous.kill('SIGKILL');
     }
   }, 3000);
 }

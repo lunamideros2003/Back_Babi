@@ -32,5 +32,25 @@ router.get('/categories', (_req, res) => {
   res.json({ ok: true, categories: CATEGORIES.map(({ key, label }) => ({ key, label })) });
 });
 
+router.get('/ports', (_req, res) => {
+  res.json({
+    ok: true,
+    project: 'BabyTrack IA',
+    backend: {
+      port: env.port,
+      url: `http://localhost:${env.port}`,
+      role: 'API de BabyTrack (no es el frontend)',
+    },
+    frontend: {
+      port: 5180,
+      url: 'http://localhost:5180',
+      role: 'Interfaz de BabyTrack',
+    },
+    tip:
+      'Si ves otra aplicacion en el navegador, estas en el puerto equivocado. ' +
+      `BabyTrack se abre en http://localhost:5180 y su API responde en http://localhost:${env.port}/api/health.`,
+  });
+});
+
 export { all };
 export default router;

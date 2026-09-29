@@ -6,30 +6,48 @@ import { isOpenAiConfigured } from './services/ai/openaiProvider.js';
 
 const app = createApp();
 
-function findProcessOnPort(port) {
+function readCommandLine(pid) {
+  try {
+    const output = execSync(`wmic process where processid=${pid} get CommandLine /value`, {
+      encoding: 'utf8',
+    });
+    return output.trim();
+  } catch {
+    try {
+      return execSync(`ps -p ${pid} -o command=`, { encoding: 'utf8' }).trim();
+    } catch {
+      return '';
+    }
+  }
+}
+
+function findOwners(port) {
   try {
     const isWindows = process.platform === 'win32';
-    const command = isWindows ? `netstat -ano | findstr :${port}` : `lsof -ti :${port}`;
-    const output = execSync(command, { encoding: 'utf8' });
+    const output = execSync(isWindows ? `netstat -ano | findstr :${port}` : `lsof -ti :${port}`, {
+      encoding: 'utf8',
+    });
 
-    if (isWindows) {
-      const lines = output.split('\n').filter((line) => line.includes('LISTENING'));
-      if (lines.length === 0) return [];
+    const pids = isWindows
+      ? output
+          .split('\n')
+          .filter((line) => line.includes('LISTENING'))
+          .map((line) => Number(line.trim().split(/\s+/).pop()))
+          .filter((pid) => Number.isFinite(pid) && pid > 0 && pid !== process.pid)
+      : output
+          .split('\n')
+          .map((value) => Number(value.trim()))
+          .filter((pid) => Number.isFinite(pid) && pid > 0 && pid !== process.pid);
 
-      const pids = lines
-        .map((line) => {
-          const parts = line.trim().split(/\s+/);
-          return Number(parts[parts.length - 1]);
-        })
-        .filter((pid) => Number.isFinite(pid) && pid > 0 && pid !== process.pid);
-
-      return [...new Set(pids)].map((pid) => ({ pid }));
-    }
-
-    return output
-      .split('\n')
-      .map((pid) => Number(pid.trim()))
-      .filter(Boolean);
+    return [...new Set(pids)].map((pid) => {
+      const commandLine = readCommandLine(pid);
+      const match = commandLine.match(/Proyectos_Mideros[\\/]([^\\"]+?)[\\/]+([^\\"\s]+)/);
+      return {
+        pid,
+        project: match ? `${match[1]}/${match[2]}` : 'otro proyecto',
+        isSameProject: commandLine.includes('Back_Babi'),
+      };
+    });
   } catch {
     return [];
   }
@@ -54,28 +72,30 @@ server.on('listening', () => {
 
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
-    const conflicts = findProcessOnPort(env.port);
+    const owners = findOwners(env.port);
 
     console.error('');
     console.error(`  El puerto ${env.port} ya esta en uso.`);
-    console.error('');
 
-    if (conflicts.length > 0) {
-      console.error('  Procesos que lo ocupan:');
-      for (const { pid } of conflicts) {
-        console.error(`    PID ${pid}`);
-      }
+    if (owners.length > 0) {
       console.error('');
-      console.error('  Para detenerlos en Windows:');
-      for (const { pid } of conflicts) {
-        console.error(`    taskkill /PID ${pid} /F`);
+      for (const owner of owners) {
+        const tag = owner.isSameProject
+          ? ' (otra copia de BabyTrack)'
+          : ' (proyecto distinto)';
+        console.error(`    PID ${owner.pid} - ${owner.project}${tag}`);
       }
     }
 
     console.error('');
-    console.error('  O cambia el puerto en el archivo .env:');
+    console.error('  Libera el puerto:');
+    for (const owner of owners) {
+      console.error(`    taskkill /PID ${owner.pid} /F`);
+    }
+    console.error('');
+    console.error('  O cambia el puerto en Back_Babi/.env:');
     console.error('    PORT=4002');
-    console.error('  y actualiza el proxy del frontend:');
+    console.error('  y actualiza Fron_Babi/.env:');
     console.error('    VITE_PROXY_TARGET=http://localhost:4002');
     console.error('');
   } else {

@@ -13,7 +13,7 @@ export const env = {
     process.env.DATABASE_FILE ?? path.join(rootDir, 'data', 'babytrack.sqlite'),
   jwtSecret: process.env.JWT_SECRET ?? 'babytrack-dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
-  corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+  corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:5180')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean),
