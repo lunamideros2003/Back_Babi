@@ -1,57 +1,10 @@
-import { execSync } from 'node:child_process';
 import env from './config/env.js';
 import { createApp } from './app.js';
 import { closeDatabase } from './db/connection.js';
 import { isOpenAiConfigured } from './services/ai/openaiProvider.js';
+import { findPortOwners } from './utils/ports.js';
 
 const app = createApp();
-
-function readCommandLine(pid) {
-  try {
-    const output = execSync(`wmic process where processid=${pid} get CommandLine /value`, {
-      encoding: 'utf8',
-    });
-    return output.trim();
-  } catch {
-    try {
-      return execSync(`ps -p ${pid} -o command=`, { encoding: 'utf8' }).trim();
-    } catch {
-      return '';
-    }
-  }
-}
-
-function findOwners(port) {
-  try {
-    const isWindows = process.platform === 'win32';
-    const output = execSync(isWindows ? `netstat -ano | findstr :${port}` : `lsof -ti :${port}`, {
-      encoding: 'utf8',
-    });
-
-    const pids = isWindows
-      ? output
-          .split('\n')
-          .filter((line) => line.includes('LISTENING'))
-          .map((line) => Number(line.trim().split(/\s+/).pop()))
-          .filter((pid) => Number.isFinite(pid) && pid > 0 && pid !== process.pid)
-      : output
-          .split('\n')
-          .map((value) => Number(value.trim()))
-          .filter((pid) => Number.isFinite(pid) && pid > 0 && pid !== process.pid);
-
-    return [...new Set(pids)].map((pid) => {
-      const commandLine = readCommandLine(pid);
-      const match = commandLine.match(/Proyectos_Mideros[\\/]([^\\"]+?)[\\/]+([^\\"\s]+)/);
-      return {
-        pid,
-        project: match ? `${match[1]}/${match[2]}` : 'otro proyecto',
-        isSameProject: commandLine.includes('Back_Babi'),
-      };
-    });
-  } catch {
-    return [];
-  }
-}
 
 const server = app.listen(env.port);
 
@@ -72,7 +25,7 @@ server.on('listening', () => {
 
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
-    const owners = findOwners(env.port);
+    const owners = findPortOwners(env.port);
 
     console.error('');
     console.error(`  El puerto ${env.port} ya esta en uso.`);
@@ -80,9 +33,9 @@ server.on('error', (error) => {
     if (owners.length > 0) {
       console.error('');
       for (const owner of owners) {
-        const tag = owner.isSameProject
+        const tag = owner.commandLine.includes('Back_Babi')
           ? ' (otra copia de BabyTrack)'
-          : ' (proyecto distinto)';
+          : ' (otro proyecto)';
         console.error(`    PID ${owner.pid} - ${owner.project}${tag}`);
       }
     }

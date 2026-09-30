@@ -9,6 +9,7 @@ import pregnancyRoutes from './routes/pregnancy.routes.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
 import remindersRoutes from './routes/reminders.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import botRoutes from './routes/bot.routes.js';
 import trackingRoutes from './routes/tracking.routes.js';
 import { ensureDatabase } from './db/index.js';
 
@@ -27,6 +28,7 @@ export function createApp() {
   app.use('/api/appointments', appointmentsRoutes);
   app.use('/api/reminders', remindersRoutes);
   app.use('/api/chat', chatRoutes);
+  app.use('/api/bot', botRoutes);
   app.use('/api/tracking', trackingRoutes);
 
   app.use(notFound);

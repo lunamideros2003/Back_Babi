@@ -37,7 +37,20 @@ SQLite usando el modulo nativo de Node (`node:sqlite`). No requiere instalar
 nada ni compilar modulos nativos. El archivo se crea solo en `data/babytrack.sqlite`.
 
 Tablas: `users`, `pregnancies`, `weeks`, `appointments`, `reminders`,
-`chat_messages`, `checkup_logs`, `symptom_logs`.
+`chat_messages`, `checkup_logs`, `symptom_logs`, `bot_sessions`, `bot_answers`.
+
+## Bot de preguntas
+
+Modulo que le hace preguntas a la usuaria y devuelve una respuesta educativa
+por cada una, mas un resumen final con un puntaje de seguimiento de 0 a 12.
+
+- `services/bot/questionBank.js`: 10 preguntas de tipo opcion, escala,
+  seleccion multiple y texto libre, separadas por categoria.
+- `services/bot/botService.js`: reglas de feedback local, puntaje y resumen.
+  Si hay `OPENAI_API_KEY` usa el modelo para redactar, y si no, las reglas.
+- `routes/bot.routes.js`: endpoints del flujo.
+
+El bot nunca diagnostica ni receta, igual que el resto del sistema.
 
 ## Comandos
 
@@ -45,8 +58,9 @@ Tablas: `users`, `pregnancies`, `weeks`, `appointments`, `reminders`,
 npm install
 npm run dev          # servidor con recarga automatica en :4001
 npm start            # servidor normal, sin recarga
-npm test             # 24 pruebas unitarias
-npm run test:api     # prueba de humo contra el servidor corriendo
+npm test             # 35 pruebas unitarias
+npm run test:api     # prueba de humo del API (requiere el servidor)
+npm run test:bot     # prueba de humo del bot (requiere el servidor)
 npm run db:reset     # borra la base de datos
 npm run db:seed      # recarga las 40 semanas
 npm run check:copy   # revisa que los textos en espanol no esten corruptos
@@ -113,6 +127,13 @@ GET   /api/chat/history
 POST  /api/chat
 POST  /api/chat/classify
 GET   /api/chat/categories
+GET   /api/bot/questions
+GET   /api/bot/sessions
+POST  /api/bot/sessions
+GET   /api/bot/sessions/:id
+POST  /api/bot/sessions/:id/answers
+DELETE /api/bot/sessions/:id
+POST  /api/bot/reset
 GET   /api/tracking/timeline
 GET   /api/tracking/checkups
 POST  /api/tracking/checkups
