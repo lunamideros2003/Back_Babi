@@ -12,21 +12,23 @@ import { localAnswer } from './localProvider.js';
 import { openAiAnswer, isOpenAiConfigured } from './openaiProvider.js';
 import { get, all, run } from '../../db/connection.js';
 
-function loadWeekContext(pregnancy) {
+async function loadWeekContext(pregnancy) {
   if (!pregnancy) return null;
-  return get('SELECT * FROM weeks WHERE week_number = :week', {
+  return await get('SELECT * FROM weeks WHERE week_number = :week', {
     week: pregnancy.current_week,
   });
 }
 
-function loadHistory(userId, limit = 6) {
-  return all(
+async function loadHistory(userId, limit = 6) {
+  const rows = await all(
     `SELECT role, content FROM chat_messages
      WHERE user_id = :userId
      ORDER BY id DESC
      LIMIT :limit`,
     { userId, limit },
-  ).reverse();
+  );
+
+  return rows.reverse();
 }
 
 /**
@@ -34,9 +36,9 @@ function loadHistory(userId, limit = 6) {
  * Order matters: safety first, then classification, then the model.
  */
 export async function getAssistantReply({ user, pregnancy, message, history }) {
-  const weekData = loadWeekContext(pregnancy);
+  const weekData = await loadWeekContext(pregnancy);
   const classification = classifyQuestion(message);
-  const conversation = history ?? loadHistory(user.id);
+  const conversation = history ?? (await loadHistory(user.id));
 
   const base = {
     userId: user.id,
@@ -89,8 +91,16 @@ export async function getAssistantReply({ user, pregnancy, message, history }) {
   }
 }
 
-export function persistMessage({ userId, role, content, category, pregnancyWeek, provider, tokensUsed }) {
-  const result = run(
+export async function persistMessage({
+  userId,
+  role,
+  content,
+  category,
+  pregnancyWeek,
+  provider,
+  tokensUsed,
+}) {
+  const result = await run(
     `INSERT INTO chat_messages
        (user_id, role, content, category, pregnancy_week, provider, tokens_used)
      VALUES
@@ -105,6 +115,7 @@ export function persistMessage({ userId, role, content, category, pregnancyWeek,
       tokensUsed: tokensUsed ?? null,
     },
   );
+
   return Number(result.lastInsertRowid);
 }
 

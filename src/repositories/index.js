@@ -4,6 +4,11 @@ import { signToken } from '../utils/token.js';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../utils/errors.js';
 import { calculatePregnancy, toISODate, addDays } from '../utils/pregnancyMath.js';
 
+/**
+ * Every function is async because the Postgres driver is network based. The
+ * SQLite driver resolves immediately, so local development stays instant.
+ */
+
 function toPublicUser(row) {
   if (!row) return null;
   return {
@@ -14,32 +19,32 @@ function toPublicUser(row) {
   };
 }
 
-export function findByEmail(email) {
-  return get('SELECT * FROM users WHERE email = :email', { email: String(email).toLowerCase() });
+export async function findByEmail(email) {
+  return await get('SELECT * FROM users WHERE email = :email', { email: String(email).toLowerCase() });
 }
 
-export function findById(id) {
-  return get('SELECT * FROM users WHERE id = :id', { id });
+export async function findById(id) {
+  return await get('SELECT * FROM users WHERE id = :id', { id });
 }
 
-export function createUser({ name, email, password }) {
+export async function createUser({ name, email, password }) {
   const normalizedEmail = String(email).toLowerCase().trim();
 
-  if (findByEmail(normalizedEmail)) {
+  if (await findByEmail(normalizedEmail)) {
     throw new ConflictError('Ese correo ya esta registrado.');
   }
 
-  const result = run(
-    `INSERT INTO users (name, email, password_hash) 
+  const result = await run(
+    `INSERT INTO users (name, email, password_hash)
      VALUES (:name, :email, :passwordHash)`,
     { name: name.trim(), email: normalizedEmail, passwordHash: hashPassword(password) },
   );
 
-  return findById(Number(result.lastInsertRowid));
+  return await findById(Number(result.lastInsertRowid));
 }
 
-export function verifyCredentials(email, password) {
-  const user = findByEmail(email);
+export async function verifyCredentials(email, password) {
+  const user = await findByEmail(email);
   if (!user) throw new UnauthorizedError('Correo o contrasena incorrectos.');
   if (!verifyPassword(password, user.password_hash)) {
     throw new UnauthorizedError('Correo o contrasena incorrectos.');
@@ -47,12 +52,12 @@ export function verifyCredentials(email, password) {
   return user;
 }
 
-export function updateProfile(userId, { name, dueDate }) {
-  const user = findById(userId);
+export async function updateProfile(userId, { name, dueDate }) {
+  const user = await findById(userId);
   if (!user) throw new NotFoundError('Usuario');
 
-  run(
-    `UPDATE users 
+  await run(
+    `UPDATE users
      SET name = COALESCE(:name, name), due_date = COALESCE(:dueDate, due_date),
          updated_at = datetime('now')
      WHERE id = :userId`,
@@ -60,26 +65,26 @@ export function updateProfile(userId, { name, dueDate }) {
   );
 
   if (dueDate) {
-    upsertPregnancy(userId, dueDate);
+    await upsertPregnancy(userId, dueDate);
   }
 
-  return findById(userId);
+  return await findById(userId);
 }
 
 /* ---------------------------------- pregnancy --------------------------------- */
 
-export function getPregnancy(userId) {
-  return get('SELECT * FROM pregnancies WHERE user_id = :userId', { userId });
+export async function getPregnancy(userId) {
+  return await get('SELECT * FROM pregnancies WHERE user_id = :userId', { userId });
 }
 
-export function upsertPregnancy(userId, dueDate, extra = {}) {
+export async function upsertPregnancy(userId, dueDate, extra = {}) {
   const calculated = calculatePregnancy({ dueDate });
   if (!calculated) throw new NotFoundError('Fecha de parto');
 
-  const existing = getPregnancy(userId);
+  const existing = await getPregnancy(userId);
 
   if (existing) {
-    run(
+    await run(
       `UPDATE pregnancies
        SET due_date = :dueDate, start_date = :startDate, current_week = :currentWeek,
            current_day = :currentDay, baby_name = COALESCE(:babyName, baby_name),
@@ -96,7 +101,7 @@ export function upsertPregnancy(userId, dueDate, extra = {}) {
       },
     );
   } else {
-    run(
+    await run(
       `INSERT INTO pregnancies
          (user_id, due_date, start_date, current_week, current_day, baby_name, notes)
        VALUES
@@ -113,48 +118,48 @@ export function upsertPregnancy(userId, dueDate, extra = {}) {
     );
   }
 
-  run('UPDATE users SET due_date = :dueDate, updated_at = datetime(\'now\') WHERE id = :userId', {
+  await run("UPDATE users SET due_date = :dueDate, updated_at = datetime('now') WHERE id = :userId", {
     dueDate: calculated.due_date,
     userId,
   });
 
-  return getPregnancy(userId);
+  return await getPregnancy(userId);
 }
 
-export function refreshPregnancy(userId) {
-  const pregnancy = getPregnancy(userId);
+export async function refreshPregnancy(userId) {
+  const pregnancy = await getPregnancy(userId);
   if (!pregnancy) return null;
 
   const calculated = calculatePregnancy({ dueDate: pregnancy.due_date });
   if (!calculated) return pregnancy;
 
-  run(
+  await run(
     `UPDATE pregnancies
      SET current_week = :currentWeek, current_day = :currentDay, updated_at = datetime('now')
      WHERE id = :id`,
     { currentWeek: calculated.current_week, currentDay: calculated.current_day, id: pregnancy.id },
   );
 
-  return { ...getPregnancy(userId), ...calculated };
+  return { ...(await getPregnancy(userId)), ...calculated };
 }
 
-export function pregnancySummary(userId) {
-  const pregnancy = refreshPregnancy(userId);
+export async function pregnancySummary(userId) {
+  const pregnancy = await refreshPregnancy(userId);
   if (!pregnancy) return null;
 
   const calculated = calculatePregnancy({ dueDate: pregnancy.due_date });
-  const week = get('SELECT * FROM weeks WHERE week_number = :week', {
+  const week = await get('SELECT * FROM weeks WHERE week_number = :week', {
     week: pregnancy.current_week,
   });
 
-  const nextAppointment = get(
+  const nextAppointment = await get(
     `SELECT * FROM appointments
      WHERE user_id = :userId AND scheduled_at >= datetime('now') AND status = 'scheduled'
      ORDER BY scheduled_at ASC LIMIT 1`,
     { userId },
   );
 
-  const pendingReminders = get(
+  const pendingReminders = await get(
     `SELECT COUNT(*) AS total FROM reminders
      WHERE user_id = :userId AND is_completed = 0`,
     { userId },
@@ -176,31 +181,33 @@ export function pregnancySummary(userId) {
 
 /* --------------------------------- appointments -------------------------------- */
 
-export function listAppointments(userId, { scope = 'all' } = {}) {
+export async function listAppointments(userId, { scope = 'all' } = {}) {
   if (scope === 'upcoming') {
-    return all(
+    return await all(
       `SELECT * FROM appointments
        WHERE user_id = :userId AND scheduled_at >= datetime('now')
        ORDER BY scheduled_at ASC`,
       { userId },
     );
   }
+
   if (scope === 'past') {
-    return all(
+    return await all(
       `SELECT * FROM appointments
        WHERE user_id = :userId AND scheduled_at < datetime('now')
        ORDER BY scheduled_at DESC`,
       { userId },
     );
   }
-  return all(
+
+  return await all(
     'SELECT * FROM appointments WHERE user_id = :userId ORDER BY scheduled_at ASC',
     { userId },
   );
 }
 
-export function createAppointment(userId, data) {
-  const result = run(
+export async function createAppointment(userId, data) {
+  const result = await run(
     `INSERT INTO appointments (user_id, title, category, scheduled_at, location, provider_name, notes)
      VALUES (:userId, :title, :category, :scheduledAt, :location, :providerName, :notes)`,
     {
@@ -213,17 +220,18 @@ export function createAppointment(userId, data) {
       notes: data.notes ?? null,
     },
   );
-  return get('SELECT * FROM appointments WHERE id = :id', { id: Number(result.lastInsertRowid) });
+
+  return await get('SELECT * FROM appointments WHERE id = :id', { id: Number(result.lastInsertRowid) });
 }
 
-export function updateAppointment(userId, id, data) {
-  const appointment = get('SELECT * FROM appointments WHERE id = :id AND user_id = :userId', {
-    id,
-    userId,
-  });
+export async function updateAppointment(userId, id, data) {
+  const appointment = await get(
+    'SELECT * FROM appointments WHERE id = :id AND user_id = :userId',
+    { id, userId },
+  );
   if (!appointment) throw new NotFoundError('Cita');
 
-  run(
+  await run(
     `UPDATE appointments
      SET title = :title, category = :category, scheduled_at = :scheduledAt,
          location = :location, provider_name = :providerName, notes = :notes,
@@ -242,31 +250,35 @@ export function updateAppointment(userId, id, data) {
     },
   );
 
-  return get('SELECT * FROM appointments WHERE id = :id', { id });
+  return await get('SELECT * FROM appointments WHERE id = :id', { id });
 }
 
-export function deleteAppointment(userId, id) {
-  const result = run('DELETE FROM appointments WHERE id = :id AND user_id = :userId', { id, userId });
+export async function deleteAppointment(userId, id) {
+  const result = await run('DELETE FROM appointments WHERE id = :id AND user_id = :userId', {
+    id,
+    userId,
+  });
   if (result.changes === 0) throw new NotFoundError('Cita');
 }
 
 /* ---------------------------------- reminders --------------------------------- */
 
-export function listReminders(userId, { includeCompleted = false } = {}) {
+export async function listReminders(userId, { includeCompleted = false } = {}) {
   if (includeCompleted) {
-    return all(
+    return await all(
       'SELECT * FROM reminders WHERE user_id = :userId ORDER BY is_completed ASC, due_at ASC',
       { userId },
     );
   }
-  return all(
+
+  return await all(
     'SELECT * FROM reminders WHERE user_id = :userId AND is_completed = 0 ORDER BY due_at ASC',
     { userId },
   );
 }
 
-export function createReminder(userId, data) {
-  const result = run(
+export async function createReminder(userId, data) {
+  const result = await run(
     `INSERT INTO reminders (user_id, title, description, category, due_at, recurrence, source)
      VALUES (:userId, :title, :description, :category, :dueAt, :recurrence, :source)`,
     {
@@ -279,40 +291,44 @@ export function createReminder(userId, data) {
       source: data.source ?? 'manual',
     },
   );
-  return get('SELECT * FROM reminders WHERE id = :id', { id: Number(result.lastInsertRowid) });
+
+  return await get('SELECT * FROM reminders WHERE id = :id', { id: Number(result.lastInsertRowid) });
 }
 
-export function toggleReminder(userId, id) {
-  const reminder = get('SELECT * FROM reminders WHERE id = :id AND user_id = :userId', {
+export async function toggleReminder(userId, id) {
+  const reminder = await get('SELECT * FROM reminders WHERE id = :id AND user_id = :userId', {
     id,
     userId,
   });
   if (!reminder) throw new NotFoundError('Recordatorio');
 
-  run('UPDATE reminders SET is_completed = :completed WHERE id = :id', {
+  await run('UPDATE reminders SET is_completed = :completed WHERE id = :id', {
     completed: reminder.is_completed ? 0 : 1,
     id,
   });
 
-  return get('SELECT * FROM reminders WHERE id = :id', { id });
+  return await get('SELECT * FROM reminders WHERE id = :id', { id });
 }
 
-export function deleteReminder(userId, id) {
-  const result = run('DELETE FROM reminders WHERE id = :id AND user_id = :userId', { id, userId });
+export async function deleteReminder(userId, id) {
+  const result = await run('DELETE FROM reminders WHERE id = :id AND user_id = :userId', {
+    id,
+    userId,
+  });
   if (result.changes === 0) throw new NotFoundError('Recordatorio');
 }
 
 /* ------------------------------- health tracking ------------------------------ */
 
-export function listCheckups(userId) {
-  return all(
+export async function listCheckups(userId) {
+  return await all(
     'SELECT * FROM checkup_logs WHERE user_id = :userId ORDER BY recorded_at DESC',
     { userId },
   );
 }
 
-export function createCheckup(userId, data) {
-  const result = run(
+export async function createCheckup(userId, data) {
+  const result = await run(
     `INSERT INTO checkup_logs (user_id, pregnancy_week, weight_kg, blood_pressure, notes)
      VALUES (:userId, :week, :weight, :bloodPressure, :notes)`,
     {
@@ -323,18 +339,19 @@ export function createCheckup(userId, data) {
       notes: data.notes ?? null,
     },
   );
-  return get('SELECT * FROM checkup_logs WHERE id = :id', { id: Number(result.lastInsertRowid) });
+
+  return await get('SELECT * FROM checkup_logs WHERE id = :id', { id: Number(result.lastInsertRowid) });
 }
 
-export function listSymptoms(userId) {
-  return all(
+export async function listSymptoms(userId) {
+  return await all(
     'SELECT * FROM symptom_logs WHERE user_id = :userId ORDER BY created_at DESC',
     { userId },
   );
 }
 
-export function createSymptom(userId, data) {
-  const result = run(
+export async function createSymptom(userId, data) {
+  const result = await run(
     `INSERT INTO symptom_logs (user_id, pregnancy_week, symptom, severity, notes)
      VALUES (:userId, :week, :symptom, :severity, :notes)`,
     {
@@ -345,19 +362,22 @@ export function createSymptom(userId, data) {
       notes: data.notes ?? null,
     },
   );
-  return get('SELECT * FROM symptom_logs WHERE id = :id', { id: Number(result.lastInsertRowid) });
+
+  return await get('SELECT * FROM symptom_logs WHERE id = :id', { id: Number(result.lastInsertRowid) });
 }
 
-export function listChatHistory(userId, limit = 50) {
-  return all(
+export async function listChatHistory(userId, limit = 50) {
+  const rows = await all(
     `SELECT * FROM chat_messages WHERE user_id = :userId
      ORDER BY id DESC LIMIT :limit`,
     { userId, limit },
-  ).reverse();
+  );
+
+  return rows.reverse();
 }
 
-export function clearChatHistory(userId) {
-  return run('DELETE FROM chat_messages WHERE user_id = :userId', { userId });
+export async function clearChatHistory(userId) {
+  return await run('DELETE FROM chat_messages WHERE user_id = :userId', { userId });
 }
 
 export function authPayload(user) {

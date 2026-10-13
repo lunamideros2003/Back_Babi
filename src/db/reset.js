@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import env from '../config/env.js';
 
-const targets = [env.databaseFile, `${env.databaseFile}-wal`, `${env.databaseFile}-shm`];
+const targets = [
+  env.databaseFile,
+  `${env.databaseFile}-wal`,
+  `${env.databaseFile}-shm`,
+];
+
 let removed = 0;
 
 for (const file of targets) {
@@ -11,5 +16,13 @@ for (const file of targets) {
   }
 }
 
-console.log(`Base de datos eliminada (${removed} archivo/s).`);
-console.log('Se recreara automaticamente al iniciar el servidor con: npm run dev');
+if (env.databaseUrl) {
+  console.log('DATABASE_URL esta definido: no se borra nada porque la base esta en Supabase.');
+  console.log('Para vaciar la base remota, usa el SQL Editor de Supabase o ejecuta:');
+  console.log('  npm run db:migrate -- --truncate');
+} else {
+  console.log(`Base de datos local eliminada (${removed} archivo/s).`);
+  console.log('Se recreara automaticamente al iniciar el servidor con: npm run dev');
+}
+
+void ensureDatabase;

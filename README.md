@@ -10,7 +10,7 @@ src/
   db/            Conexion SQLite, esquema, seed y datos de las 40 semanas
   middleware/    Autenticacion JWT, validacion y manejo de errores
   modules/       (reservado para proximas iteraciones)
-  repositories/  Acceso a datos (todas las queries viven aqui)
+  repositories/  Acceso a datos (todas las queries viven aqui, son async)
   routes/        Endpoints HTTP
   services/
     ai/          Capa de inteligencia artificial
@@ -33,8 +33,17 @@ Flujo de una pregunta:
 
 ## Base de datos
 
-SQLite usando el modulo nativo de Node (`node:sqlite`). No requiere instalar
-nada ni compilar modulos nativos. El archivo se crea solo en `data/babytrack.sqlite`.
+Dos motores intercambiables. El se elige al arrancar segun exista o no la
+variable `DATABASE_URL`:
+
+- **SQLite** (por defecto): usa el modulo nativo de Node (`node:sqlite`). No
+  requiere instalar nada ni compilar. El archivo se crea solo en
+  `data/babytrack.sqlite`.
+- **Postgres / Supabase**: al definir `DATABASE_URL` el proyecto se conecta al
+  servidor y deja de usar el archivo local. La guia esta en `SUPABASE.md`.
+
+Las mismas consultas funcionan en los dos motores gracias a la capa de
+traduccion de `src/db/dialect.js`.
 
 Tablas: `users`, `pregnancies`, `weeks`, `appointments`, `reminders`,
 `chat_messages`, `checkup_logs`, `symptom_logs`, `bot_sessions`, `bot_answers`.
@@ -58,11 +67,13 @@ El bot nunca diagnostica ni receta, igual que el resto del sistema.
 npm install
 npm run dev          # servidor con recarga automatica en :4001
 npm start            # servidor normal, sin recarga
-npm test             # 35 pruebas unitarias
+npm test             # 46 pruebas unitarias
 npm run test:api     # prueba de humo del API (requiere el servidor)
 npm run test:bot     # prueba de humo del bot (requiere el servidor)
 npm run db:reset     # borra la base de datos
 npm run db:seed      # recarga las 40 semanas
+npm run db:migrate   # migra el esquema a Supabase
+npm run db:report    # muestra tablas y registros
 npm run check:copy   # revisa que los textos en espanol no esten corruptos
 ```
 

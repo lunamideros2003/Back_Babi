@@ -27,23 +27,23 @@ const appointmentUpdateSchema = {
   status: { type: 'string' },
 };
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const scope = req.query.scope ?? 'all';
-  res.json({ ok: true, appointments: repo.listAppointments(req.user.id, { scope }) });
+  res.json({ ok: true, appointments: await repo.listAppointments(req.user.id, { scope }) });
 });
 
-router.post('/', validate(appointmentSchema), (req, res) => {
-  const appointment = repo.createAppointment(req.user.id, req.validated);
+router.post('/', validate(appointmentSchema), async (req, res) => {
+  const appointment = await repo.createAppointment(req.user.id, req.validated);
   res.status(201).json({ ok: true, appointment });
 });
 
-router.put('/:id', validate(appointmentUpdateSchema), (req, res) => {
-  const appointment = repo.updateAppointment(req.user.id, Number(req.params.id), req.validated);
+router.put('/:id', validate(appointmentUpdateSchema), async (req, res) => {
+  const appointment = await repo.updateAppointment(req.user.id, Number(req.params.id), req.validated);
   res.json({ ok: true, appointment });
 });
 
-router.delete('/:id', (req, res) => {
-  repo.deleteAppointment(req.user.id, Number(req.params.id));
+router.delete('/:id', async (req, res) => {
+  await repo.deleteAppointment(req.user.id, Number(req.params.id));
   res.json({ ok: true });
 });
 

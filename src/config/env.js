@@ -11,6 +11,8 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   databaseFile:
     process.env.DATABASE_FILE ?? path.join(rootDir, 'data', 'babytrack.sqlite'),
+  // When present, the app talks to Postgres (Supabase) instead of the local file.
+  databaseUrl: process.env.DATABASE_URL ?? '',
   jwtSecret: process.env.JWT_SECRET ?? 'babytrack-dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:5180')

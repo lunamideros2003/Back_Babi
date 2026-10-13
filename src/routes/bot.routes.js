@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { all, get, run, transaction } from '../db/connection.js';
+import { all, get, run } from '../db/connection.js';
 import * as repo from '../repositories/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { NotFoundError, ValidationError } from '../utils/errors.js';
@@ -43,8 +43,8 @@ function shapeQuestion(question, currentIndex) {
   return base;
 }
 
-function getSession(userId, sessionId) {
-  const session = get('SELECT * FROM bot_sessions WHERE id = :id AND user_id = :userId', {
+async function getSession(userId, sessionId) {
+  const session = await get('SELECT * FROM bot_sessions WHERE id = :id AND user_id = :userId', {
     id: sessionId,
     userId,
   });
@@ -52,14 +52,14 @@ function getSession(userId, sessionId) {
   return session;
 }
 
-function getAnswers(sessionId) {
-  return all(
+async function getAnswers(sessionId) {
+  return await all(
     'SELECT * FROM bot_answers WHERE session_id = :sessionId ORDER BY id ASC',
     { sessionId },
   );
 }
 
-router.get('/questions', (_req, res) => {
+router.get('/questions', async (_req, res) => {
   res.json({
     ok: true,
     total: TOTAL_QUESTIONS,
@@ -68,24 +68,24 @@ router.get('/questions', (_req, res) => {
   });
 });
 
-router.get('/sessions', (req, res) => {
-  const sessions = all(
+router.get('/sessions', async (req, res) => {
+  const sessions = await all(
     'SELECT * FROM bot_sessions WHERE user_id = :userId ORDER BY id DESC LIMIT 10',
     { userId: req.user.id },
   );
   res.json({ ok: true, sessions });
 });
 
-router.post('/sessions', (req, res) => {
-  const pregnancy = repo.getPregnancy(req.user.id);
+router.post('/sessions', async (req, res) => {
+  const pregnancy = await repo.getPregnancy(req.user.id);
 
-  const result = run(
+  const result = await run(
     `INSERT INTO bot_sessions (user_id, pregnancy_week, status, current_index)
      VALUES (:userId, :week, 'in_progress', 0)`,
     { userId: req.user.id, week: pregnancy?.current_week ?? null },
   );
 
-  const session = get('SELECT * FROM bot_sessions WHERE id = :id', {
+  const session = await get('SELECT * FROM bot_sessions WHERE id = :id', {
     id: Number(result.lastInsertRowid),
   });
 
@@ -97,9 +97,9 @@ router.post('/sessions', (req, res) => {
   });
 });
 
-router.get('/sessions/:id', (req, res) => {
-  const session = getSession(req.user.id, Number(req.params.id));
-  const answers = getAnswers(session.id);
+router.get('/sessions/:id', async (req, res) => {
+  const session = await getSession(req.user.id, Number(req.params.id));
+  const answers = await getAnswers(session.id);
 
   if (session.status === 'completed') {
     return res.json({
@@ -126,7 +126,7 @@ router.get('/sessions/:id', (req, res) => {
 
 router.post('/sessions/:id/answers', async (req, res, next) => {
   try {
-    const session = getSession(req.user.id, Number(req.params.id));
+    const session = await getSession(req.user.id, Number(req.params.id));
 
     if (session.status === 'completed') {
       throw new ValidationError([
@@ -145,17 +145,17 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
     const errors = validateAnswer(question, value, text);
     if (errors.length > 0) throw new ValidationError(errors);
 
-    const pregnancy = repo.getPregnancy(req.user.id);
+    const pregnancy = await repo.getPregnancy(req.user.id);
     const feedback = await buildFeedback({
       question,
       value: value ?? text,
       user: req.user,
-      weekData: pregnancy ? getWeekData(pregnancy.current_week) : null,
+      weekData: pregnancy ? await getWeekData(pregnancy.current_week) : null,
     });
 
     const storedValue = Array.isArray(value) ? value.join(',') : (value ?? null);
 
-    run(
+    await run(
       `INSERT INTO bot_answers
          (session_id, question_id, question_text, category, answer_value, answer_text, feedback)
        VALUES
@@ -175,12 +175,12 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
     const isLast = nextIndex >= TOTAL_QUESTIONS;
 
     if (isLast) {
-      const answers = getAnswers(session.id);
+      const answers = await getAnswers(session.id);
       const score = scoreFromAnswers(answers);
-      const weekData = getWeekData(session.pregnancy_week);
+      const weekData = await getWeekData(session.pregnancy_week);
       const summary = buildSummaryText(answers, score, weekData);
 
-      run(
+      await run(
         `UPDATE bot_sessions
          SET status = 'completed', current_index = :nextIndex, answers_count = :count,
              summary = :summary, score = :score, completed_at = datetime('now')
@@ -194,7 +194,7 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
         },
       );
 
-      const updated = get('SELECT * FROM bot_sessions WHERE id = :id', { id: session.id });
+      const updated = await get('SELECT * FROM bot_sessions WHERE id = :id', { id: session.id });
 
       return res.json({
         ok: true,
@@ -209,7 +209,7 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
       });
     }
 
-    run(
+    await run(
       `UPDATE bot_sessions
        SET current_index = :nextIndex, answers_count = :count
        WHERE id = :id`,
@@ -220,14 +220,14 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
     if (!session.pregnancy_week) {
       const estimated = weekForTrimester(storedValue);
       if (estimated) {
-        run('UPDATE bot_sessions SET pregnancy_week = :week WHERE id = :id', {
+        await run('UPDATE bot_sessions SET pregnancy_week = :week WHERE id = :id', {
           week: estimated,
           id: session.id,
         });
       }
     }
 
-    const updated = get('SELECT * FROM bot_sessions WHERE id = :id', { id: session.id });
+    const updated = await get('SELECT * FROM bot_sessions WHERE id = :id', { id: session.id });
 
     return res.json({
       ok: true,
@@ -243,16 +243,14 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
   }
 });
 
-router.delete('/sessions/:id', (req, res) => {
-  const session = getSession(req.user.id, Number(req.params.id));
-  run('DELETE FROM bot_sessions WHERE id = :id', { id: session.id });
+router.delete('/sessions/:id', async (req, res) => {
+  const session = await getSession(req.user.id, Number(req.params.id));
+  await run('DELETE FROM bot_sessions WHERE id = :id', { id: session.id });
   res.json({ ok: true });
 });
 
-router.post('/reset', (req, res) => {
-  transaction(() => {
-    run('DELETE FROM bot_sessions WHERE user_id = :userId', { userId: req.user.id });
-  });
+router.post('/reset', async (req, res) => {
+  await run('DELETE FROM bot_sessions WHERE user_id = :userId', { userId: req.user.id });
   res.json({ ok: true });
 });
 

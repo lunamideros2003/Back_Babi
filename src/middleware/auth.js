@@ -2,7 +2,7 @@ import { verifyToken } from '../utils/token.js';
 import { UnauthorizedError } from '../utils/errors.js';
 import * as repo from '../repositories/index.js';
 
-export function requireAuth(req, _res, next) {
+export async function requireAuth(req, _res, next) {
   try {
     const header = req.headers.authorization ?? '';
     const [scheme, token] = header.split(' ');
@@ -12,7 +12,7 @@ export function requireAuth(req, _res, next) {
     }
 
     const payload = verifyToken(token);
-    const user = repo.findById(payload.sub);
+    const user = await repo.findById(payload.sub);
 
     if (!user) throw new UnauthorizedError('La sesion ya no es valida.');
 

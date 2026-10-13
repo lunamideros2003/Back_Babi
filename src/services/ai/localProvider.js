@@ -4,9 +4,9 @@ import { buildSystemContext } from './guardrails.js';
 import { DISCLAIMER } from '../../config/disclaimers.js';
 import { get } from '../../db/connection.js';
 
-function getWeek(weekNumber) {
+async function getWeek(weekNumber) {
   if (!weekNumber || weekNumber < 4 || weekNumber > 40) return null;
-  return get('SELECT * FROM weeks WHERE week_number = :week', { week: weekNumber });
+  return await get('SELECT * FROM weeks WHERE week_number = :week', { week: weekNumber });
 }
 
 function normalize(text) {
@@ -95,7 +95,7 @@ export async function localAnswer({ message, weekData, userName }) {
 
   if (asksAboutWeek(message)) {
     const asked = requestedWeek(message);
-    const target = asked && asked !== weekData?.week_number ? getWeek(asked) : weekData;
+    const target = asked && asked !== weekData?.week_number ? await getWeek(asked) : weekData;
     parts.push(weekAnswer(weekData, asked ? target : null));
   } else if (entry) {
     parts.push(entry.answer);

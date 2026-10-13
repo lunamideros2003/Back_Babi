@@ -245,9 +245,9 @@ export function buildSummaryText(answers, score, weekData) {
   return parts.join('\n').trim();
 }
 
-export function getWeekData(weekNumber) {
+export async function getWeekData(weekNumber) {
   if (!weekNumber) return null;
-  return get('SELECT * FROM weeks WHERE week_number = :week', { week: weekNumber });
+  return await get('SELECT * FROM weeks WHERE week_number = :week', { week: weekNumber });
 }
 
 export { cleanText };

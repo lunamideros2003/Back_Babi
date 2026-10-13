@@ -6,12 +6,12 @@ import { calculatePregnancy, dueDateFromLastPeriod, dueDateFromWeek } from '../u
 
 const router = Router();
 
-router.get('/', (_req, res) => {
-  const weeks = all('SELECT * FROM weeks ORDER BY week_number ASC');
+router.get('/', async (_req, res) => {
+  const weeks = await all('SELECT * FROM weeks ORDER BY week_number ASC');
   res.json({ ok: true, total: weeks.length, weeks });
 });
 
-router.get('/calculate', (req, res) => {
+router.get('/calculate', async (req, res) => {
   const { dueDate, lastPeriodDate, week } = req.query;
 
   let resolved = dueDate ?? null;
@@ -24,18 +24,18 @@ router.get('/calculate', (req, res) => {
   res.json({ ok: true, pregnancy: calculatePregnancy({ dueDate: resolved }) });
 });
 
-router.get('/:number', (req, res) => {
+router.get('/:number', async (req, res) => {
   const number = Number(req.params.number);
-  const week = get('SELECT * FROM weeks WHERE week_number = :number', { number });
+  const week = await get('SELECT * FROM weeks WHERE week_number = :number', { number });
 
   if (!week) throw new NotFoundError('Semana');
 
   res.json({ ok: true, week });
 });
 
-router.get('/around/:number', requireAuth, (req, res) => {
+router.get('/around/:number', requireAuth, async (req, res) => {
   const center = Number(req.params.number);
-  const weeks = all(
+  const weeks = await all(
     `SELECT * FROM weeks
      WHERE week_number BETWEEN :from AND :to
      ORDER BY week_number ASC`,

@@ -30,48 +30,48 @@ const updateProfileSchema = {
   babyName: { type: 'string', max: 60 },
 };
 
-router.post('/register', validate(registerSchema), (req, res) => {
+router.post('/register', validate(registerSchema), async (req, res) => {
   const { name, email, password, dueDate, lastPeriodDate, currentWeek, babyName } = req.validated;
-  const user = repo.createUser({ name, email, password });
+  const user = await repo.createUser({ name, email, password });
 
   const resolvedDueDate =
     dueDate ?? dueDateFromLastPeriod(lastPeriodDate) ?? dueDateFromWeek(currentWeek);
 
   if (resolvedDueDate) {
-    repo.upsertPregnancy(user.id, resolvedDueDate, { babyName });
+    await repo.upsertPregnancy(user.id, resolvedDueDate, { babyName });
   }
 
-  res.status(201).json({ ok: true, ...repo.authPayload(user) });
+  res.status(201).json({ ok: true, ...await repo.authPayload(user) });
 });
 
-router.post('/login', validate(loginSchema), (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   const { email, password } = req.validated;
-  const user = repo.verifyCredentials(email, password);
-  res.json({ ok: true, ...repo.authPayload(user) });
+  const user = await repo.verifyCredentials(email, password);
+  res.json({ ok: true, ...await repo.authPayload(user) });
 });
 
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   res.json({
     ok: true,
-    user: repo.toPublicUser(req.user),
-    pregnancy: repo.pregnancySummary(req.user.id),
+    user: await repo.toPublicUser(req.user),
+    pregnancy: await repo.pregnancySummary(req.user.id),
   });
 });
 
-router.patch('/me', requireAuth, validate(updateProfileSchema), (req, res) => {
+router.patch('/me', requireAuth, validate(updateProfileSchema), async (req, res) => {
   const { name, dueDate, lastPeriodDate, currentWeek, babyName } = req.validated;
   const resolvedDueDate =
     dueDate ?? dueDateFromLastPeriod(lastPeriodDate) ?? dueDateFromWeek(currentWeek);
-  const user = repo.updateProfile(req.user.id, { name, dueDate: resolvedDueDate });
+  const user = await repo.updateProfile(req.user.id, { name, dueDate: resolvedDueDate });
 
   if (resolvedDueDate) {
-    repo.upsertPregnancy(user.id, resolvedDueDate, { babyName });
+    await repo.upsertPregnancy(user.id, resolvedDueDate, { babyName });
   }
 
   res.json({
     ok: true,
-    user: repo.toPublicUser(user),
-    pregnancy: repo.pregnancySummary(req.user.id),
+    user: await repo.toPublicUser(user),
+    pregnancy: await repo.pregnancySummary(req.user.id),
   });
 });
 

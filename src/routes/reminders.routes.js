@@ -16,20 +16,20 @@ const reminderSchema = {
   recurrence: { type: 'string', default: 'none' },
 };
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const includeCompleted = req.query.all === 'true';
-  res.json({ ok: true, reminders: repo.listReminders(req.user.id, { includeCompleted }) });
+  res.json({ ok: true, reminders: await repo.listReminders(req.user.id, { includeCompleted }) });
 });
 
-router.post('/', validate(reminderSchema), (req, res) => {
-  const reminder = repo.createReminder(req.user.id, req.validated);
+router.post('/', validate(reminderSchema), async (req, res) => {
+  const reminder = await repo.createReminder(req.user.id, req.validated);
   res.status(201).json({ ok: true, reminder });
 });
 
 router.post('/generate', async (req, res, next) => {
   try {
     const count = Math.min(Number(req.body?.count ?? 5), 10);
-    const pregnancy = repo.getPregnancy(req.user.id);
+    const pregnancy = await repo.getPregnancy(req.user.id);
 
     if (!pregnancy) {
       throw new ValidationError([
@@ -39,16 +39,19 @@ router.post('/generate', async (req, res, next) => {
 
     const suggestions = await generateReminders({ pregnancy, count });
 
-    const created = suggestions.map((item) =>
-      repo.createReminder(req.user.id, {
-        title: item.title,
-        description: item.description,
-        category: item.category,
-        due_at: item.due_at,
-        recurrence: item.recurrence,
-        source: item.source,
-      }),
-    );
+    const created = [];
+    for (const item of suggestions) {
+      created.push(
+        await repo.createReminder(req.user.id, {
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          due_at: item.due_at,
+          recurrence: item.recurrence,
+          source: item.source,
+        }),
+      );
+    }
 
     res.status(201).json({ ok: true, reminders: created });
   } catch (error) {
@@ -56,13 +59,13 @@ router.post('/generate', async (req, res, next) => {
   }
 });
 
-router.patch('/:id/toggle', (req, res) => {
-  const reminder = repo.toggleReminder(req.user.id, Number(req.params.id));
+router.patch('/:id/toggle', async (req, res) => {
+  const reminder = await repo.toggleReminder(req.user.id, Number(req.params.id));
   res.json({ ok: true, reminder });
 });
 
-router.delete('/:id', (req, res) => {
-  repo.deleteReminder(req.user.id, Number(req.params.id));
+router.delete('/:id', async (req, res) => {
+  await repo.deleteReminder(req.user.id, Number(req.params.id));
   res.json({ ok: true });
 });
 

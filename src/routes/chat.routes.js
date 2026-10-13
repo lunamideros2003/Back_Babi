@@ -9,7 +9,7 @@ import { ValidationError } from '../utils/errors.js';
 const router = Router();
 router.use(requireAuth);
 
-router.get('/categories', (_req, res) => {
+router.get('/categories', async (_req, res) => {
   res.json({
     ok: true,
     categories: CATEGORIES.map(({ key, label }) => ({ key, label })),
@@ -17,9 +17,9 @@ router.get('/categories', (_req, res) => {
   });
 });
 
-router.get('/history', (req, res) => {
+router.get('/history', async (req, res) => {
   const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  res.json({ ok: true, messages: repo.listChatHistory(req.user.id, limit) });
+  res.json({ ok: true, messages: await repo.listChatHistory(req.user.id, limit) });
 });
 
 router.post('/', async (req, res, next) => {
@@ -35,9 +35,9 @@ router.post('/', async (req, res, next) => {
       ]);
     }
 
-    const pregnancy = repo.getPregnancy(req.user.id);
+    const pregnancy = await repo.getPregnancy(req.user.id);
 
-    const userMessageId = persistMessage({
+    const userMessageId = await persistMessage({
       userId: req.user.id,
       role: 'user',
       content: message,
@@ -50,7 +50,7 @@ router.post('/', async (req, res, next) => {
       message,
     });
 
-    const assistantMessageId = persistMessage({
+    const assistantMessageId = await persistMessage({
       userId: req.user.id,
       role: 'assistant',
       content: answer.content,
@@ -84,13 +84,13 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.post('/classify', (req, res) => {
+router.post('/classify', async (req, res) => {
   const result = classifyQuestion(String(req.body?.message ?? ''));
   res.json({ ok: true, ...result });
 });
 
-router.delete('/history', (req, res) => {
-  repo.clearChatHistory(req.user.id);
+router.delete('/history', async (req, res) => {
+  await repo.clearChatHistory(req.user.id);
   res.json({ ok: true });
 });
 

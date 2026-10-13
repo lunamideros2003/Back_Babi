@@ -1,10 +1,10 @@
 import env from './config/env.js';
 import { createApp } from './app.js';
-import { closeDatabase } from './db/connection.js';
+import { closeDatabase, DRIVER } from './db/connection.js';
 import { isOpenAiConfigured } from './services/ai/openaiProvider.js';
 import { findPortOwners } from './utils/ports.js';
 
-const app = createApp();
+const app = await createApp();
 
 const server = app.listen(env.port);
 
@@ -15,9 +15,9 @@ server.on('listening', () => {
 
   console.log('');
   console.log('  BabyTrack IA - API');
-  console.log(`  Entorno:   http://localhost:${env.port}`);
+  console.log(`  Entorno:   ${env.nodeEnv}`);
+  console.log(`  Base:      ${env.databaseUrl ? 'Supabase / Postgres' : env.databaseFile}`);
   console.log(`  Health:    http://localhost:${env.port}/api/health`);
-  console.log(`  Base:      ${env.databaseFile}`);
   console.log(`  IA:        ${aiMode}`);
   console.log(`  CORS:      ${env.corsOrigin.join(', ')}`);
   console.log('');
@@ -55,15 +55,13 @@ server.on('error', (error) => {
     console.error('  Error al iniciar el servidor:', error.message);
   }
 
-  closeDatabase();
-  process.exit(1);
+  closeDatabase().finally(() => process.exit(1));
 });
 
 function shutdown(signal) {
   console.log(`\n${signal} recibido, cerrando servidor...`);
   server.close(() => {
-    closeDatabase();
-    process.exit(0);
+    closeDatabase().finally(() => process.exit(0));
   });
 }
 

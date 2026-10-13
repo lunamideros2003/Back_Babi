@@ -21,38 +21,38 @@ const symptomSchema = {
   notes: { type: 'string', max: 1000 },
 };
 
-router.get('/checkups', (req, res) => {
-  res.json({ ok: true, checkups: repo.listCheckups(req.user.id) });
+router.get('/checkups', async (req, res) => {
+  res.json({ ok: true, checkups: await repo.listCheckups(req.user.id) });
 });
 
-router.post('/checkups', validate(checkupSchema), (req, res) => {
-  const checkup = repo.createCheckup(req.user.id, req.validated);
+router.post('/checkups', validate(checkupSchema), async (req, res) => {
+  const checkup = await repo.createCheckup(req.user.id, req.validated);
   res.status(201).json({ ok: true, checkup });
 });
 
-router.get('/symptoms', (req, res) => {
-  res.json({ ok: true, symptoms: repo.listSymptoms(req.user.id) });
+router.get('/symptoms', async (req, res) => {
+  res.json({ ok: true, symptoms: await repo.listSymptoms(req.user.id) });
 });
 
-router.post('/symptoms', validate(symptomSchema), (req, res) => {
-  const symptom = repo.createSymptom(req.user.id, req.validated);
+router.post('/symptoms', validate(symptomSchema), async (req, res) => {
+  const symptom = await repo.createSymptom(req.user.id, req.validated);
   res.status(201).json({ ok: true, symptom });
 });
 
-router.get('/timeline', (req, res) => {
-  const pregnancy = repo.getPregnancy(req.user.id);
+router.get('/timeline', async (req, res) => {
+  const pregnancy = await repo.getPregnancy(req.user.id);
   const week = pregnancy
-    ? get('SELECT * FROM weeks WHERE week_number = :week', { week: pregnancy.current_week })
+    ? await get('SELECT * FROM weeks WHERE week_number = :week', { week: pregnancy.current_week })
     : null;
 
   res.json({
     ok: true,
-    pregnancy: repo.pregnancySummary(req.user.id),
+    pregnancy: await repo.pregnancySummary(req.user.id),
     week,
-    appointments: repo.listAppointments(req.user.id, { scope: 'upcoming' }),
-    reminders: repo.listReminders(req.user.id),
-    checkups: repo.listCheckups(req.user.id),
-    symptoms: repo.listSymptoms(req.user.id),
+    appointments: await repo.listAppointments(req.user.id, { scope: 'upcoming' }),
+    reminders: await repo.listReminders(req.user.id),
+    checkups: await repo.listCheckups(req.user.id),
+    symptoms: await repo.listSymptoms(req.user.id),
   });
 });
 

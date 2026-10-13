@@ -1,46 +1,53 @@
-import { db, run, get } from './connection.js';
+import { exec, run, get, ping, DRIVER } from './connection.js';
 import { schema } from './schema.js';
+import { postgresSchema } from './schema.postgres.js';
 import weeks from './data/weeks.js';
 
-export function createTables() {
-  db.exec(schema);
+export async function createTables() {
+  const definition = DRIVER === 'postgres' ? postgresSchema : schema;
+  await exec(definition);
 }
 
-export function seedWeeks() {
-  const upsert = db.prepare(`
-    INSERT INTO weeks (
-      week_number, title, summary, baby_development, mother_changes,
-      size_comparison, typical_weight, typical_length,
-      tips, food_focus, exercise_tip, checkup_focus
-    ) VALUES (
-      :week_number, :title, :summary, :baby_development, :mother_changes,
-      :size_comparison, :typical_weight, :typical_length,
-      :tips, :food_focus, :exercise_tip, :checkup_focus
-    )
-    ON CONFLICT(week_number) DO UPDATE SET
-      title = excluded.title,
-      summary = excluded.summary,
-      baby_development = excluded.baby_development,
-      mother_changes = excluded.mother_changes,
-      size_comparison = excluded.size_comparison,
-      typical_weight = excluded.typical_weight,
-      typical_length = excluded.typical_length,
-      tips = excluded.tips,
-      food_focus = excluded.food_focus,
-      exercise_tip = excluded.exercise_tip,
-      checkup_focus = excluded.checkup_focus
-  `);
+export async function seedWeeks() {
+  for (const week of weeks) {
+    await run(
+      `INSERT INTO weeks (
+         week_number, title, summary, baby_development, mother_changes,
+         size_comparison, typical_weight, typical_length,
+         tips, food_focus, exercise_tip, checkup_focus
+       ) VALUES (
+         :week_number, :title, :summary, :baby_development, :mother_changes,
+         :size_comparison, :typical_weight, :typical_length,
+         :tips, :food_focus, :exercise_tip, :checkup_focus
+       )
+       ON CONFLICT (week_number) DO UPDATE SET
+         title = excluded.title,
+         summary = excluded.summary,
+         baby_development = excluded.baby_development,
+         mother_changes = excluded.mother_changes,
+         size_comparison = excluded.size_comparison,
+         typical_weight = excluded.typical_weight,
+         typical_length = excluded.typical_length,
+         tips = excluded.tips,
+         food_focus = excluded.food_focus,
+         exercise_tip = excluded.exercise_tip,
+         checkup_focus = excluded.checkup_focus`,
+      week,
+    );
+  }
 
-  for (const week of weeks) upsert.run(week);
-
-  return get('SELECT COUNT(*) AS total FROM weeks');
+  return await get('SELECT COUNT(*) AS total FROM weeks');
 }
 
-export function ensureDatabase() {
-  createTables();
-  const existing = Number(get('SELECT COUNT(*) AS total FROM weeks')?.total ?? 0);
-  if (existing < weeks.length) seedWeeks();
+export async function ensureDatabase() {
+  await createTables();
+  const current = await get('SELECT COUNT(*) AS total FROM weeks');
+  const existing = Number(current?.total ?? 0);
+
+  if (existing < weeks.length) await seedWeeks();
+
+  return { driver: DRIVER, weeks: existing, connection: await ping() };
 }
 
-export { run, get };
+export { DRIVER };
 export default ensureDatabase;
