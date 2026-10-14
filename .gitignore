@@ -1,8 +1,10 @@
 # Dependencies
 node_modules/
 
-# Local database
-data/
+# Local database (solo la carpeta raiz: el SQLite local)
+# OJO: sin la barra inicial, esta regla tambien ignoraba src/db/data/weeks.js
+# (las 37 semanas) y rompia el deploy en Render.
+/data/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
