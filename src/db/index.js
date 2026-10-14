@@ -41,12 +41,15 @@ export async function seedWeeks() {
 
 export async function ensureDatabase() {
   await createTables();
+
   const current = await get('SELECT COUNT(*) AS total FROM weeks');
   const existing = Number(current?.total ?? 0);
 
   if (existing < weeks.length) await seedWeeks();
 
-  return { driver: DRIVER, weeks: existing, connection: await ping() };
+  const final = await get('SELECT COUNT(*) AS total FROM weeks');
+
+  return { driver: DRIVER, weeks: Number(final?.total ?? 0), connection: await ping() };
 }
 
 export { DRIVER };

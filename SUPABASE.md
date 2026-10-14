@@ -60,16 +60,16 @@ npm run db:migrate
 Ese comando:
 
 1. Crea las 10 tablas en Supabase
-2. Carga las 40 semanas de contenido educativo
+2. Carga las 37 semanas de contenido educativo
 3. Verifica que todo quedo bien
 
 Debes ver algo asi:
 
 ```
-Driver: postgres
+Objetivo: postgresql://postgres.xxxxx:****@aws-0-region.pooler.supabase.com:5432/postgres
 1/3 Creando tablas...
     Listo.
-2/3 Cargando las 40 semanas...
+2/3 Cargando las semanas...
     37 semanas en la base.
 3/3 Verificando...
     Driver postgres, 37 semanas disponibles.
@@ -100,14 +100,13 @@ http://localhost:4001/api/health
 {
   "ok": true,
   "status": "up",
-  "database": "sqlite",
+  "database": "postgres",
   "weeks_loaded": 37
 }
 ```
 
-Nota: el campo `database` del reporte sigue diciendo `sqlite` porque describe el
-esquema logico del proyecto, no el motor. El motor real se ve en `Base:` al
-arrancar o con `npm run db:report`.
+Nota: el campo `database` dice `postgres` cuando la migracion salio bien, y
+`sqlite` mientras siga apuntando al archivo local.
 
 ## Comandos utiles
 
@@ -179,5 +178,6 @@ Tu plan permite pocas conexiones simultaneas. Si usaste el pooler de
 transacciones en vez del de sesion, cambialo.
 
 **La migracion se queda esperando**
-Tu red o firewall puede estar bloqueando el puerto 5432 hacia fuera. Prueba
-desde otra red o usa el pooler en la region mas cercana a ti.
+Tu red o firewall puede estar bloqueando el puerto de salida. El pooler de
+sesion de Supabase escucha en el **6543** (`6542` es el de transacciones).
+Si el 5432 esta bloqueado, prueba con el 6543.

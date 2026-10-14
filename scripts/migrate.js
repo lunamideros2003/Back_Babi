@@ -1,7 +1,6 @@
-import { exec, run, all, ping, closeDatabase, DRIVER } from './connection.js';
-import { postgresSchema } from './schema.postgres.js';
-import { createTables, seedWeeks, ensureDatabase } from './index.js';
-import env from '../config/env.js';
+import { exec, all, ping, closeDatabase, DRIVER } from '../src/db/connection.js';
+import { createTables, seedWeeks, ensureDatabase } from '../src/db/index.js';
+import env from '../src/config/env.js';
 
 const TABLES = [
   'bot_answers',
@@ -79,7 +78,7 @@ async function main() {
   await createTables();
   console.log('    Listo.');
 
-  console.log('2/3 Cargando las 40 semanas...');
+  console.log('2/3 Cargando las semanas...');
   const seeded = await seedWeeks();
   console.log(`    ${seeded.total} semanas en la base.`);
 
@@ -106,6 +105,3 @@ try {
   await closeDatabase();
   process.exit(1);
 }
-
-void run;
-void postgresSchema;
