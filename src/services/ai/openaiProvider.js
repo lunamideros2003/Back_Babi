@@ -21,7 +21,7 @@ function buildMessages({ message, weekData, history, userName }) {
   const messages = [
     {
       role: 'system',
-      content: `${SYSTEM_PROMPT}\n\n${buildGroundingContext(weekData)}\n\nUsuario: ${userName || 'sin nombre'}.`,
+      content: `${SYSTEM_PROMPT}\n\n${buildGroundingContext(weekData, message)}\n\nUsuario: ${userName || 'sin nombre'}.`,
     },
   ];
 

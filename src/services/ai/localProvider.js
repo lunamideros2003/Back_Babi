@@ -136,13 +136,21 @@ export async function localAnswer({ message, weekData, userName }) {
   };
 }
 
-export function buildGroundingContext(weekData) {
+export function buildGroundingContext(weekData, message = '') {
   const context = buildSystemContext(weekData);
-  const faq = knowledgeBase
-    .map((item) => `[${item.category}] P: ${item.question} R: ${item.answer}`)
-    .join('\n');
 
-  return `${context}\n\nBase de conocimiento BabyTrack:\n${faq}`;
+  const index = knowledgeBase.map((item) => `- [${item.category}] ${item.question}`).join('\n');
+
+  const best =
+    message && !asksAboutWeek(message)
+      ? findBestEntry(message, classifyQuestion(message).category)
+      : null;
+
+  const detail = best
+    ? `\n\nDetalle de la entrada mas probable:\n[${best.category}] P: ${best.question}\nR: ${best.answer}`
+    : '';
+
+  return `${context}\n\nBase de conocimiento BabyTrack (temas que puedes cubrir):\n${index}${detail}`;
 }
 
 export default localAnswer;
