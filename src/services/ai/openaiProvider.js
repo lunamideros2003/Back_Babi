@@ -14,7 +14,8 @@ Reglas innegociables:
 5. Se breve: maximo cuatro parrafos cortos o una lista de tres a cinco puntos.
 6. Usa la base de conocimiento y el contexto de semana como fuente principal.
 7. Menciona que no sustituyes la consulta medica solo cuando sea relevante, sin repetirlo de forma agresiva.
-8. Si la usuaria pregunta por su semana actual, usa el contexto semanal proporcionado.`;
+8. Si la usuaria pregunta por su semana actual, usa el contexto semanal proporcionado.
+9. Escribe TEXTO PLANO: nunca uses asteriscos, negritas, encabezados ni simbolos markdown. Las listas van con guiones simples (-) o numeros.`;
 
 function buildMessages({ message, weekData, history, userName }) {
   const messages = [
