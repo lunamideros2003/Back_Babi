@@ -100,7 +100,19 @@ CREATE TABLE IF NOT EXISTS symptom_logs (
   created_at        TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS journal_entries (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  mood              TEXT,
+  content           TEXT    NOT NULL,
+  entry_date        TEXT    NOT NULL,
+  pregnancy_week    INTEGER,
+  created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+  updated_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_appt_user_date ON appointments(user_id, scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_journal_user_date ON journal_entries(user_id, entry_date);
 CREATE INDEX IF NOT EXISTS idx_reminders_user_due ON reminders(user_id, due_at);
 CREATE TABLE IF NOT EXISTS bot_sessions (
   id                INTEGER PRIMARY KEY AUTOINCREMENT,

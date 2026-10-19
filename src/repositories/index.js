@@ -318,6 +318,41 @@ export async function deleteReminder(userId, id) {
   if (result.changes === 0) throw new NotFoundError('Recordatorio');
 }
 
+/* ----------------------------------- diary ---------------------------------- */
+
+export async function listJournalEntries(userId) {
+  return await all(
+    'SELECT * FROM journal_entries WHERE user_id = :userId ORDER BY entry_date DESC, id DESC',
+    { userId },
+  );
+}
+
+export async function createJournalEntry(userId, data) {
+  const result = await run(
+    `INSERT INTO journal_entries (user_id, mood, content, entry_date, pregnancy_week)
+     VALUES (:userId, :mood, :content, :entryDate, :pregnancyWeek)`,
+    {
+      userId,
+      mood: data.mood ?? null,
+      content: data.content,
+      entryDate: data.entry_date,
+      pregnancyWeek: data.pregnancy_week ?? null,
+    },
+  );
+
+  return await get('SELECT * FROM journal_entries WHERE id = :id', {
+    id: Number(result.lastInsertRowid),
+  });
+}
+
+export async function deleteJournalEntry(userId, id) {
+  const result = await run('DELETE FROM journal_entries WHERE id = :id AND user_id = :userId', {
+    id,
+    userId,
+  });
+  if (result.changes === 0) throw new NotFoundError('Entrada del diario');
+}
+
 /* ------------------------------- health tracking ------------------------------ */
 
 export async function listCheckups(userId) {

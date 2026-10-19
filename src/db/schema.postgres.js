@@ -133,6 +133,17 @@ CREATE TABLE IF NOT EXISTS bot_answers (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS journal_entries (
+  id             SERIAL PRIMARY KEY,
+  user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  mood           VARCHAR(24),
+  content        TEXT    NOT NULL,
+  entry_date     DATE    NOT NULL,
+  pregnancy_week INTEGER,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_appt_user_date ON appointments(user_id, scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_reminders_user_due ON reminders(user_id, due_at);
 CREATE INDEX IF NOT EXISTS idx_chat_user_created ON chat_messages(user_id, created_at);

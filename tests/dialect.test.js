@@ -105,6 +105,7 @@ test('las claves foraneas están declaradas en Postgres', () => {
     'symptom_logs',
     'bot_sessions',
     'bot_answers',
+    'journal_entries',
   ]) {
     const block = new RegExp(
       `CREATE TABLE IF NOT EXISTS ${table} \\([\\s\\S]*?\\n\\);`,
@@ -113,4 +114,32 @@ test('las claves foraneas están declaradas en Postgres', () => {
     assert.ok(block, `falta la tabla ${table}`);
     assert.match(block[0], /REFERENCES \w+\(id\)/, `${table} sin clave foranea`);
   }
+});
+
+test('journal_entries tiene las mismas columnas en ambos esquemas', () => {
+  const columnas = ['id', 'user_id', 'mood', 'content', 'entry_date', 'pregnancy_week'];
+
+  for (const columna of columnas) {
+    assert.match(
+      sqliteSchema,
+      new RegExp(`CREATE TABLE IF NOT EXISTS journal_entries \\([\\s\\S]*?\\b${columna}\\b`),
+      `falta ${columna} en SQLite`,
+    );
+    assert.match(
+      postgresSchema,
+      new RegExp(`CREATE TABLE IF NOT EXISTS journal_entries \\([\\s\\S]*?\\b${columna}\\b`),
+      `falta ${columna} en Postgres`,
+    );
+  }
+});
+
+test('content es el unico campo obligatorio del diario', () => {
+  const bloque = /CREATE TABLE IF NOT EXISTS journal_entries \(([\s\S]*?)\n\);/.exec(
+    postgresSchema,
+  );
+
+  assert.ok(bloque);
+  assert.match(bloque[1], /content\s+TEXT\s+NOT NULL/);
+  assert.match(bloque[1], /mood\s+VARCHAR\(\d+\)\s*,/);
+  assert.doesNotMatch(bloque[1], /mood\s+VARCHAR\(\d+\)\s+NOT NULL/);
 });
