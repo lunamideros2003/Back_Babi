@@ -37,6 +37,35 @@ async function report() {
   const weeks = await get('SELECT COUNT(*) AS total FROM weeks');
   console.log(`Semanas: ${weeks.total}`);
   console.log(`Usuarios: ${users.total}`);
+
+  await reportSecurity();
+}
+
+/** Informa del estado del RLS, que es lo que impide el acceso directo. */
+async function reportSecurity() {
+  const rows = await all(`
+    SELECT c.relname AS tabla, c.relrowsecurity AS rls,
+           (SELECT count(*)::int FROM pg_policies p
+             WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS politicas
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relkind = 'r'
+    ORDER BY c.relname
+  `);
+
+  const sinRls = rows.filter((row) => row.rls !== true);
+
+  console.log('');
+  console.log('Seguridad (RLS):');
+  for (const row of rows) {
+    console.log(`  ${row.rls === true ? 'OK  ' : 'FALTA'} ${row.tabla.padEnd(18)} politicas=${row.politicas}`);
+  }
+  console.log('');
+  console.log(
+    sinRls.length === 0
+      ? 'Todas las tablas estan protegidas.'
+      : `Faltan por proteger: ${sinRls.map((row) => row.tabla).join(', ')}. Usa: npm run db:security`,
+  );
 }
 
 async function get(sql, params) {
