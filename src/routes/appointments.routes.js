@@ -3,13 +3,18 @@ import * as repo from '../repositories/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/index.js';
 import { NotFoundError } from '../utils/errors.js';
+import {
+  APPOINTMENT_CATEGORIES,
+  APPOINTMENT_STATUSES,
+  APPOINTMENT_CATEGORY_VALUES,
+} from '../config/appointments.js';
 
 const router = Router();
 router.use(requireAuth);
 
 const appointmentSchema = {
   title: { type: 'string', required: true, min: 2, max: 120 },
-  category: { type: 'string', default: 'checkup' },
+  category: { type: 'string', default: 'checkup', oneOf: APPOINTMENT_CATEGORY_VALUES },
   scheduled_at: { type: 'datetime', required: true },
   location: { type: 'string', max: 160 },
   provider_name: { type: 'string', max: 120 },
@@ -19,13 +24,21 @@ const appointmentSchema = {
 
 const appointmentUpdateSchema = {
   title: { type: 'string', min: 2, max: 120 },
-  category: { type: 'string' },
+  category: { type: 'string', oneOf: APPOINTMENT_CATEGORY_VALUES },
   scheduled_at: { type: 'datetime' },
   location: { type: 'string', max: 160 },
   provider_name: { type: 'string', max: 120 },
   notes: { type: 'string', max: 1000 },
   status: { type: 'string' },
 };
+
+router.get('/categories', (_req, res) => {
+  res.json({
+    ok: true,
+    categories: APPOINTMENT_CATEGORIES,
+    statuses: APPOINTMENT_STATUSES,
+  });
+});
 
 router.get('/', async (req, res) => {
   const scope = req.query.scope ?? 'all';
