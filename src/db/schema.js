@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS bot_answers (
 CREATE INDEX IF NOT EXISTS idx_bot_sessions_user ON bot_sessions(user_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_bot_answers_session ON bot_answers(session_id, id);
 CREATE INDEX IF NOT EXISTS idx_chat_user_created ON chat_messages(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_user_id ON chat_messages(user_id, id);
 CREATE INDEX IF NOT EXISTS idx_checkups_user ON checkup_logs(user_id, recorded_at);
 CREATE INDEX IF NOT EXISTS idx_symptoms_user ON symptom_logs(user_id, created_at);
 `;
