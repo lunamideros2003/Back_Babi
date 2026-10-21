@@ -1,0 +1,45 @@
+# Configuracion de despliegue de BabyTrack IA en Render.
+# Con esto el servicio se crea siempre igual: mismo nombre, mismo build,
+# mismo comando de arranque y las mismas variables.
+#
+# Desde el panel de Render: New > Blueprint, apuntando a este repositorio.
+# Las variables marcadas con sync: false se escriben a mano en el panel
+# (Render no puede inventar una clave de API ni una contrasena de base).
+
+services:
+  - type: web
+    name: back-babi
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # La API se monta en /api, asi que el proxy de Vercel debe apuntar a
+      # https://back-babi.onrender.com/api
+      - key: CORS_ORIGIN
+        value: https://fron-babi.vercel.app
+
+      # JWT: Render genera una aleatoria si no se indica una fija.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # IA gratuita con Groq. El backend habla el protocolo de OpenAI, por eso
+      # las variables se llaman OPENAI_* aunque el proveedor sea Groq.
+      - key: AI_PROVIDER
+        value: auto
+      - key: OPENAI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: OPENAI_MODEL
+        value: qwen/qwen3.8-27b
+      - key: OPENAI_API_KEY
+        sync: false
+
+      # Conexion a Supabase. Sin sslmode=require y con el puerto 5432 del
+      # pooler de sesion: el codigo ya normaliza la URL por si acaso.
+      - key: DATABASE_URL
+        sync: false
