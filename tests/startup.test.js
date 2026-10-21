@@ -37,6 +37,67 @@ test('una url vacia se queda vacia', () => {
   assert.equal(normalizeDatabaseUrl(undefined), '');
 });
 
+test('codifica un # sin escapar en la contrasena', () => {
+  assert.equal(
+    normalizeDatabaseUrl('postgresql://postgres.x:pa#ss@host:5432/postgres'),
+    'postgresql://postgres.x:pa%23ss@host:5432/postgres',
+  );
+});
+
+test('codifica un ? sin escapar en la contrasena', () => {
+  assert.equal(
+    normalizeDatabaseUrl('postgresql://postgres.x:pa?ss@host:5432/postgres'),
+    'postgresql://postgres.x:pa%3Fss@host:5432/postgres',
+  );
+});
+
+test('un ? en la contrasena no se confunde con la query', () => {
+  const result = normalizeDatabaseUrl('postgresql://postgres.x:pa?ss@host:5432/postgres?sslmode=require');
+
+  assert.equal(result, 'postgresql://postgres.x:pa%3Fss@host:5432/postgres');
+});
+
+test('no codifica dos veces una contrasena ya codificada', () => {
+  assert.equal(
+    normalizeDatabaseUrl('postgresql://postgres.x:p%40ss%2Fword@host:5432/postgres'),
+    'postgresql://postgres.x:p%40ss%2Fword@host:5432/postgres',
+  );
+});
+
+test('quita las comillas que vienen al copiar', () => {
+  assert.equal(
+    normalizeDatabaseUrl('"postgresql://postgres.x:p%40ss@host:5432/postgres"'),
+    'postgresql://postgres.x:p%40ss@host:5432/postgres',
+  );
+  assert.equal(
+    normalizeDatabaseUrl("'postgresql://postgres.x:p%40ss@host:5432/postgres'"),
+    'postgresql://postgres.x:p%40ss@host:5432/postgres',
+  );
+});
+
+test('un @ dentro de la contrasena no rompe el reparto', () => {
+  assert.equal(
+    normalizeDatabaseUrl('postgresql://postgres.x:p@ss@host:5432/postgres'),
+    'postgresql://postgres.x:p%40ss@host:5432/postgres',
+  );
+});
+
+test('deja intacta una url sin credenciales', () => {
+  assert.equal(
+    normalizeDatabaseUrl('postgresql://host:5432/postgres'),
+    'postgresql://host:5432/postgres',
+  );
+});
+
+test('la url reparada se puede volver a leer como URL', () => {
+  const url = normalizeDatabaseUrl('postgresql://postgres.x:pa#ss@host:5432/postgres?sslmode=require');
+  const parsed = new URL(url, 'postgres://base');
+
+  assert.equal(parsed.host, 'host:5432');
+  assert.equal(parsed.username, 'postgres.x');
+  assert.equal(decodeURIComponent(parsed.password), 'pa#ss');
+});
+
 test('withRetry reintenta hasta que la operacion funciona', async () => {
   let attempts = 0;
 
