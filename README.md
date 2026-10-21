@@ -165,10 +165,25 @@ GET   /api/tracking/checkups
 POST  /api/tracking/checkups
 GET   /api/tracking/symptoms
 POST  /api/tracking/symptoms
+GET   /api/summary
+GET   /api/version
+GET   /api/appointments/categories
 ```
 
 Respuestas con la forma `{ ok: true, ... }` o
 `{ ok: false, error: { code, message, details } }`.
+
+### Codigos de error
+
+| Codigo | Estado | Que significa |
+|---|---|---|
+| `UNAUTHORIZED` | 401 | Falta el token o ha caducado. |
+| `VALIDATION_ERROR` | 422 | Algun campo no cumple las reglas. `details` lista campo por campo. |
+| `NOT_FOUND` | 404 | El recurso no existe o no es de esta usuaria. |
+| `ROUTE_NOT_FOUND` | 404 | La ruta no existe. |
+| `CONFLICT` | 409 | El correo ya esta registrado. |
+| `RATE_LIMITED` | 429 | Demasiadas preguntas seguidas. La cabecera `Retry-After` dice cuantos segundos esperar. |
+| `INTERNAL_ERROR` | 500 | Error inesperado. El detalle solo se ve en los registros del servidor. |
 
 ## Activar la IA real
 
