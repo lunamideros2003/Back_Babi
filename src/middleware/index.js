@@ -37,6 +37,11 @@ export function validate(schema) {
             errors.push({ field, message: `Debe tener al menos ${rules.min} caracteres.` });
           } else if (rules.max && raw.length > rules.max) {
             errors.push({ field, message: `Debe tener maximo ${rules.max} caracteres.` });
+          } else if (rules.oneOf && !rules.oneOf.includes(raw)) {
+            errors.push({
+              field,
+              message: `El valor debe ser uno de: ${rules.oneOf.join(', ')}.`,
+            });
           } else {
             clean[field] = String(raw).trim();
           }
