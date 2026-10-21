@@ -411,14 +411,22 @@ export async function createSymptom(userId, data) {
   return await get('SELECT * FROM symptom_logs WHERE id = :id', { id: Number(result.lastInsertRowid) });
 }
 
-export async function listChatHistory(userId, limit = 50) {
+export async function listChatHistory(userId, limit = 50, offset = 0) {
   const rows = await all(
     `SELECT * FROM chat_messages WHERE user_id = :userId
-     ORDER BY id DESC LIMIT :limit`,
-    { userId, limit },
+     ORDER BY id DESC LIMIT :limit OFFSET :offset`,
+    { userId, limit, offset },
   );
 
   return rows.reverse();
+}
+
+export async function countChatMessages(userId) {
+  const row = await get(
+    'SELECT COUNT(*) AS total FROM chat_messages WHERE user_id = :userId',
+    { userId },
+  );
+  return Number(row?.total ?? 0);
 }
 
 export async function clearChatHistory(userId) {
