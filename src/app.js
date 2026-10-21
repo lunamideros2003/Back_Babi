@@ -14,6 +14,7 @@ import botRoutes from './routes/bot.routes.js';
 import trackingRoutes from './routes/tracking.routes.js';
 import guideRoutes from './routes/guide.routes.js';
 import journalRoutes from './routes/journal.routes.js';
+import summaryRoutes from './routes/summary.routes.js';
 import { ensureDatabase, bootState } from './db/index.js';
 
 export async function createApp() {
@@ -55,6 +56,7 @@ export async function createApp() {
   app.use('/api/tracking', asyncRouter(trackingRoutes));
   app.use('/api/guide', asyncRouter(guideRoutes));
   app.use('/api/journal', asyncRouter(journalRoutes));
+  app.use('/api/summary', asyncRouter(summaryRoutes));
 
   app.use(notFound);
   app.use(errorHandler);
