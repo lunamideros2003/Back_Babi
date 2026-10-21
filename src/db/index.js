@@ -1,7 +1,18 @@
-import { exec, run, get, ping, DRIVER } from './connection.js';
+import { exec, run, get, ping, withRetry, DRIVER } from './connection.js';
 import { schema } from './schema.js';
 import { postgresSchema } from './schema.postgres.js';
 import weeks from './data/weeks.js';
+
+/**
+ * State of the database at boot.
+ *
+ * The HTTP service must come up even when the database is unreachable, so a
+ * broken connection shows up as a readable diagnostic in `/api/health` and in
+ * the logs instead of a container that keeps restarting.
+ */
+export const bootState = {
+  database: { ready: false, driver: DRIVER, error: null, weeks: 0 },
+};
 
 export async function createTables() {
   const definition = DRIVER === 'postgres' ? postgresSchema : schema;
@@ -40,16 +51,20 @@ export async function seedWeeks() {
 }
 
 export async function ensureDatabase() {
-  await createTables();
+  // The first connection after a cold start can be refused while the pooler
+  // wakes up, so the whole bootstrap is retried instead of crashing at once.
+  return await withRetry(async () => {
+    await createTables();
 
-  const current = await get('SELECT COUNT(*) AS total FROM weeks');
-  const existing = Number(current?.total ?? 0);
+    const current = await get('SELECT COUNT(*) AS total FROM weeks');
+    const existing = Number(current?.total ?? 0);
 
-  if (existing < weeks.length) await seedWeeks();
+    if (existing < weeks.length) await seedWeeks();
 
-  const final = await get('SELECT COUNT(*) AS total FROM weeks');
+    const final = await get('SELECT COUNT(*) AS total FROM weeks');
 
-  return { driver: DRIVER, weeks: Number(final?.total ?? 0), connection: await ping() };
+    return { driver: DRIVER, weeks: Number(final?.total ?? 0), connection: await ping() };
+  });
 }
 
 export { DRIVER };

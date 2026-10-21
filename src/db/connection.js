@@ -50,6 +50,33 @@ async function getPool() {
   return pool;
 }
 
+/**
+ * Runs `fn` until it succeeds or the attempts run out.
+ *
+ * A freshly booted container often reaches the database before the pooler is
+ * ready to accept it. Retrying a few times turns that race into a short wait
+ * instead of a crash loop.
+ */
+export async function withRetry(fn, { attempts = 3, delayMs = 4000 } = {}) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(
+        `[db] intento ${attempt}/${attempts} fallido: ${error.message}`,
+      );
+      if (attempt < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 function plain(row) {
   if (!row) return row;
   return { ...row };
