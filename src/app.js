@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import env from './config/env.js';
 import { errorHandler, notFound, asyncRouter } from './middleware/index.js';
+import { requestId, responseTime, noCache } from './middleware/headers.js';
 import metaRoutes from './routes/meta.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import weeksRoutes from './routes/weeks.routes.js';
@@ -37,6 +38,9 @@ export async function createApp() {
 
   const app = express();
 
+  app.use(requestId);
+  app.use(responseTime);
+  app.use(noCache);
   app.use(cors({ origin: env.corsOrigin, credentials: true }));
   app.use(express.json({ limit: '256kb' }));
 
