@@ -4,10 +4,14 @@ import { requireAuth } from '../middleware/auth.js';
 import { getAssistantReply, persistMessage } from '../services/ai/chatService.js';
 import { CATEGORIES, classifyQuestion } from '../services/ai/classifier.js';
 import { faqQuestions } from '../services/ai/knowledgeBase.js';
-import { ValidationError } from '../utils/errors.js';
+import { ValidationError, AppError } from '../utils/errors.js';
+import { consume, reintentarEn } from '../utils/rateLimit.js';
 
 const router = Router();
 router.use(requireAuth);
+
+// La IA gratuita tiene un tope por minuto: se limita por usuaria.
+const LIMITE_POR_MINUTO = 20;
 
 router.get('/categories', async (_req, res) => {
   res.json({
@@ -47,6 +51,16 @@ router.post('/', async (req, res, next) => {
       throw new ValidationError([
         { field: 'message', message: 'La pregunta es demasiado larga (maximo 1000).' },
       ]);
+    }
+
+    if (!consume(`chat:${req.user.id}`, LIMITE_POR_MINUTO)) {
+      const espera = reintentarEn(`chat:${req.user.id}`);
+      res.set('Retry-After', String(espera));
+      throw new AppError(
+        `Has hecho demasiadas preguntas seguidas. Espera ${espera} segundos y vuelve a intentarlo.`,
+        429,
+        'RATE_LIMITED',
+      );
     }
 
     const pregnancy = await repo.getPregnancy(req.user.id);
