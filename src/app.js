@@ -13,10 +13,27 @@ import botRoutes from './routes/bot.routes.js';
 import trackingRoutes from './routes/tracking.routes.js';
 import guideRoutes from './routes/guide.routes.js';
 import journalRoutes from './routes/journal.routes.js';
-import { ensureDatabase } from './db/index.js';
+import { ensureDatabase, bootState } from './db/index.js';
 
 export async function createApp() {
-  await ensureDatabase();
+  try {
+    const result = await ensureDatabase();
+    bootState.database = {
+      ready: true,
+      driver: result.driver,
+      error: null,
+      weeks: result.weeks,
+    };
+  } catch (error) {
+    bootState.database = {
+      ready: false,
+      driver: env.databaseUrl ? 'postgres' : 'sqlite',
+      error: error.message,
+      weeks: 0,
+    };
+    console.error('[db] la base no esta disponible, el API arranca en modo degradado');
+    console.error(`[db] detalle: ${error.message}`);
+  }
 
   const app = express();
 

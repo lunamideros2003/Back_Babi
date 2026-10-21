@@ -1,6 +1,7 @@
 import env from './config/env.js';
 import { createApp } from './app.js';
 import { closeDatabase, DRIVER } from './db/connection.js';
+import { bootState } from './db/index.js';
 import { isOpenAiConfigured } from './services/ai/openaiProvider.js';
 import { findPortOwners } from './utils/ports.js';
 
@@ -20,6 +21,12 @@ server.on('listening', () => {
   console.log(`  Health:    http://localhost:${env.port}/api/health`);
   console.log(`  IA:        ${aiMode}`);
   console.log(`  CORS:      ${env.corsOrigin.join(', ')}`);
+  console.log(
+    `  Estado DB: ${bootState.database.ready ? `lista (${bootState.database.weeks} semanas)` : 'NO disponible'}`,
+  );
+  if (!bootState.database.ready) {
+    console.log(`  Error DB:  ${bootState.database.error}`);
+  }
   console.log('');
 });
 
