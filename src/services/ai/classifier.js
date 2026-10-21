@@ -1,7 +1,7 @@
 export const CATEGORIES = [
   {
     key: 'alimentacion',
-    label: 'Alimentacion',
+    label: 'Alimentación',
     weight: 1,
     keywords: [
       'comer', 'comida', 'alimento', 'dieta', 'nutricion', 'fruta', 'verdura', 'carne',
@@ -13,7 +13,7 @@ export const CATEGORIES = [
   },
   {
     key: 'sintomas',
-    label: 'Sintomas',
+    label: 'Síntomas',
     weight: 1.15,
     keywords: [
       'sintoma', 'dolor', 'duele', 'duelo', 'mareo', 'nausea', 'nauseas', 'vomito',
@@ -50,7 +50,7 @@ export const CATEGORIES = [
   },
   {
     key: 'desarrollo',
-    label: 'Desarrollo del bebe',
+    label: 'Desarrollo del bebé',
     weight: 1.05,
     keywords: [
       'bebe', 'feto', 'hijo', 'hija', 'crecimiento', 'tamano', 'tamaño', 'medida',
@@ -61,7 +61,7 @@ export const CATEGORIES = [
   },
   {
     key: 'parto',
-    label: 'Parto y preparacion',
+    label: 'Parto y preparación',
     weight: 1.1,
     keywords: [
       'parto', 'nacer', 'nacimiento', 'labor', 'dilatacion', 'contraccion', 'contracciones',
