@@ -18,8 +18,22 @@ router.get('/categories', async (_req, res) => {
 });
 
 router.get('/history', async (req, res) => {
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  res.json({ ok: true, messages: await repo.listChatHistory(req.user.id, limit) });
+  const limit = Math.min(Math.max(Number(req.query.limit ?? 50), 1), 200);
+  const offset = Math.max(Number(req.query.offset ?? 0), 0);
+
+  const [messages, total] = await Promise.all([
+    repo.listChatHistory(req.user.id, limit, offset),
+    repo.countChatMessages(req.user.id),
+  ]);
+
+  res.json({
+    ok: true,
+    messages,
+    total,
+    limit,
+    offset,
+    has_more: offset + messages.length < total,
+  });
 });
 
 router.post('/', async (req, res, next) => {
