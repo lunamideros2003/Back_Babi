@@ -4,17 +4,20 @@ import { CATEGORIES } from '../services/ai/classifier.js';
 import { isOpenAiConfigured } from '../services/ai/openaiProvider.js';
 import { DISCLAIMER } from '../config/disclaimers.js';
 import { all, get, DRIVER } from '../db/connection.js';
+import { bootState } from '../db/index.js';
 
 const router = Router();
 
 router.get('/health', async (_req, res) => {
-  const weeks = await get('SELECT COUNT(*) AS total FROM weeks');
-  const users = await get('SELECT COUNT(*) AS total FROM users');
+  const weeks = await get('SELECT COUNT(*) AS total FROM weeks').catch(() => null);
+  const users = await get('SELECT COUNT(*) AS total FROM users').catch(() => null);
+
+  const databaseReady = bootState.database.ready && weeks !== null;
 
   res.json({
-    ok: true,
-    status: 'up',
-    database: DRIVER,
+    ok: databaseReady,
+    status: databaseReady ? 'up' : 'degraded',
+    database: databaseReady ? DRIVER : 'error',
     weeks_loaded: Number(weeks?.total ?? 0),
     users_registered: Number(users?.total ?? 0),
     ai: {
@@ -25,6 +28,9 @@ router.get('/health', async (_req, res) => {
     },
     categories: CATEGORIES.length,
     disclaimer: DISCLAIMER,
+    ...(databaseReady
+      ? {}
+      : { database_error: bootState.database.error ?? 'sin conexion a la base de datos' }),
   });
 });
 
