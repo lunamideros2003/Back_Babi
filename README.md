@@ -67,13 +67,14 @@ El bot nunca diagnostica ni receta, igual que el resto del sistema.
 npm install
 npm run dev          # servidor con recarga automatica en :4001
 npm start            # servidor normal, sin recarga
-npm test             # 46 pruebas unitarias
+npm test             # 75 pruebas unitarias
 npm run test:api     # prueba de humo del API (requiere el servidor)
 npm run test:bot     # prueba de humo del bot (requiere el servidor)
 npm run db:reset     # borra la base de datos
 npm run db:seed      # recarga las 40 semanas
 npm run db:migrate   # migra el esquema a Supabase
-npm run db:report    # muestra tablas y registros
+npm run db:report    # muestra tablas, registros y estado de la seguridad
+npm run db:security  # activa RLS en todas las tablas
 npm run check:copy   # revisa que los textos en espanol no esten corruptos
 ```
 
@@ -82,6 +83,20 @@ npm run check:copy   # revisa que los textos en espanol no esten corruptos
 
 Si el puerto 4001 esta ocupado, el servidor lo detecta, imprime el PID que lo
 ocupa y la forma de liberarlo, en lugar de mostrar un error largo.
+
+### Seguridad de la base de datos
+
+Las tablas de Supabase tienen Row Level Security activado y una politica
+restrictiva: nadie puede leerlas ni escribirlas por la API publica de
+Supabase, solo el backend puede.
+
+El backend entra como `postgres`, que ignora el RLS, asi que activarlo no le
+afecta. Para revisar el estado:
+
+```bash
+npm run db:security:report
+```
+
 
 ## Iniciar sesion
 
