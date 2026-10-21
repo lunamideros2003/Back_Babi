@@ -320,11 +320,21 @@ export async function deleteReminder(userId, id) {
 
 /* ----------------------------------- diary ---------------------------------- */
 
-export async function listJournalEntries(userId) {
+export async function listJournalEntries(userId, { limit = 50, offset = 0 } = {}) {
   return await all(
-    'SELECT * FROM journal_entries WHERE user_id = :userId ORDER BY entry_date DESC, id DESC',
+    `SELECT * FROM journal_entries WHERE user_id = :userId
+     ORDER BY entry_date DESC, id DESC
+     LIMIT :limit OFFSET :offset`,
+    { userId, limit, offset },
+  );
+}
+
+export async function countJournalEntries(userId) {
+  const row = await get(
+    'SELECT COUNT(*) AS total FROM journal_entries WHERE user_id = :userId',
     { userId },
   );
+  return Number(row?.total ?? 0);
 }
 
 export async function createJournalEntry(userId, data) {
