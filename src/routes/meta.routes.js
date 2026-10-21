@@ -5,8 +5,19 @@ import { isOpenAiConfigured } from '../services/ai/openaiProvider.js';
 import { DISCLAIMER } from '../config/disclaimers.js';
 import { all, get, DRIVER } from '../db/connection.js';
 import { bootState } from '../db/index.js';
+import { APP_VERSION, BUILD_COMMIT, STARTED_AT } from '../config/version.js';
 
 const router = Router();
+
+router.get('/version', (_req, res) => {
+  res.json({
+    ok: true,
+    version: APP_VERSION,
+    commit: BUILD_COMMIT,
+    started_at: STARTED_AT,
+    uptime_seconds: Math.round((Date.now() - STARTED_AT) / 1000),
+  });
+});
 
 router.get('/health', async (_req, res) => {
   const weeks = await get('SELECT COUNT(*) AS total FROM weeks').catch(() => null);
