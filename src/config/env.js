@@ -7,26 +7,82 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', '..');
 
 /**
- * Supabase hands out connection strings that carry `?sslmode=require`. The
- * postgres driver reads that parameter and replaces the ssl option we set,
- * which breaks the TLS handshake against the pooler. The same string also
- * arrives with stray spaces when it is pasted into a dashboard.
+ * Encodes a piece of user info (user or password) so it is safe inside a URL.
  *
- * Normalising here keeps the rest of the code free of special cases.
+ * A password that already arrives percent-encoded is decoded first, so the
+ * result is always the same and never double encoded.
+ */
+function encodeUserInfo(value) {
+  if (!value) return '';
+
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    // A stray % that is not an escape sequence: keep it as it is.
+    decoded = value;
+  }
+
+  return encodeURIComponent(decoded);
+}
+
+/**
+ * Repairs the connection string of Supabase.
+ *
+ * Three things go wrong when the string is pasted by hand into a dashboard:
+ *
+ *  - the quotes that come along with the copy, or a stray space
+ *  - `?sslmode=require`, which the postgres driver turns into a certificate
+ *    check that the pooler does not satisfy
+ *  - a password that was never percent-encoded, so a `#` or a `?` inside it
+ *    breaks the URL and the driver answers "Invalid URL"
+ *
+ * Normalising here keeps the rest of the code free of special cases and
+ * spares the user from hand-editing a long URL.
  */
 export function normalizeDatabaseUrl(value) {
   if (!value) return '';
 
-  const trimmed = value.trim();
-  if (!trimmed.includes('?')) return trimmed;
+  let text = String(value).trim();
 
-  const [base, query] = trimmed.split('?');
+  const first = text[0];
+  const last = text[text.length - 1];
+  if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+    text = text.slice(1, -1).trim();
+  }
+
+  const schemeEnd = text.indexOf('://');
+  if (schemeEnd === -1) return text;
+
+  const scheme = text.slice(0, schemeEnd + 3);
+  const rest = text.slice(schemeEnd + 3);
+
+  // The user info ends at the last @, so an @ inside the password is safe.
+  const atIndex = rest.lastIndexOf('@');
+  const hostStart = atIndex === -1 ? 0 : atIndex + 1;
+
+  // The query string starts at the first ? that comes after the host, so a ?
+  // inside the password is not mistaken for the beginning of the query.
+  const queryStart = rest.indexOf('?', hostStart);
+
+  const credentials = atIndex === -1 ? '' : rest.slice(0, atIndex);
+  const hostAndDatabase = queryStart === -1 ? rest.slice(hostStart) : rest.slice(hostStart, queryStart);
+  const query = queryStart === -1 ? '' : rest.slice(queryStart + 1);
+
+  const separator = credentials.indexOf(':');
+  const user = separator === -1 ? credentials : credentials.slice(0, separator);
+  const password = separator === -1 ? '' : credentials.slice(separator + 1);
+
+  const rebuilt = credentials
+    ? `${encodeUserInfo(user)}${password ? `:${encodeUserInfo(password)}` : ''}@`
+    : '';
+
   const kept = query
     .split('&')
     .map((pair) => pair.trim())
     .filter((pair) => pair && !pair.toLowerCase().startsWith('sslmode='));
 
-  return kept.length > 0 ? `${base}?${kept.join('&')}` : base;
+  return `${scheme}${rebuilt}${hostAndDatabase}${kept.length > 0 ? `?${kept.join('&')}` : ''}`;
 }
 
 export const env = {
