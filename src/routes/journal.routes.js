@@ -14,7 +14,22 @@ const entrySchema = {
 };
 
 router.get('/', async (req, res) => {
-  res.json({ ok: true, entries: await repo.listJournalEntries(req.user.id) });
+  const limit = Math.min(Math.max(Number(req.query.limit ?? 50), 1), 200);
+  const offset = Math.max(Number(req.query.offset ?? 0), 0);
+
+  const [entries, total] = await Promise.all([
+    repo.listJournalEntries(req.user.id, { limit, offset }),
+    repo.countJournalEntries(req.user.id),
+  ]);
+
+  res.json({
+    ok: true,
+    entries,
+    total,
+    limit,
+    offset,
+    has_more: offset + entries.length < total,
+  });
 });
 
 router.post('/', validate(entrySchema), async (req, res) => {
