@@ -31,6 +31,9 @@ router.get('/health', async (_req, res) => {
     database: databaseReady ? DRIVER : 'error',
     weeks_loaded: Number(weeks?.total ?? 0),
     users_registered: Number(users?.total ?? 0),
+    version: APP_VERSION,
+    commit: BUILD_COMMIT,
+    uptime_seconds: Math.round((Date.now() - STARTED_AT) / 1000),
     ai: {
       provider: env.ai.provider,
       model: env.ai.model,
