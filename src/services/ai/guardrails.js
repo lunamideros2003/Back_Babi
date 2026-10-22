@@ -43,10 +43,10 @@ export function requiresRedirect(message) {
 }
 
 export const MEDICATION_REFUSAL =
-  'No puedo indicarte medicamentos ni dosis, eso le corresponde a tu obstetra o a un farmaceutico. ' +
-  'Si tu medico ya te receto algo, sigue exactamente sus indicaciones. Mientras tanto, ' +
-  'puedo explicarte los cambios tipicos de tu semana, darte orientacion general o ' +
-  'recordarte tus proximos controles.';
+  'No puedo indicarte medicamentos ni dosis, eso le corresponde a tu obstetra o a un farmacéutico. ' +
+  'Si tu médico ya te recetó algo, sigue exactamente sus indicaciones. Mientras tanto, ' +
+  'puedo explicarte los cambios típicos de tu semana, darte orientación general o ' +
+  'recordarte tus próximos controles.';
 
 export const EMERGENCY_RESPONSE = {
   content: RED_FLAG_MESSAGE,
@@ -59,10 +59,10 @@ export function buildSystemContext(weekData) {
   return [
     'Contexto de la usuaria:',
     `- Semana actual: ${weekData.week_number} de 40 (${weekData.trimester_label})`,
-    `- Tamano aproximado: ${weekData.size_comparison}`,
+    `- Tamaño aproximado: ${weekData.size_comparison}`,
     `- Desarrollo: ${weekData.baby_development}`,
-    `- Cambios tipicos en la madre: ${weekData.mother_changes}`,
-    `- Enfoque de alimentacion: ${weekData.food_focus}`,
+    `- Cambios típicos en la madre: ${weekData.mother_changes}`,
+    `- Enfoque de alimentación: ${weekData.food_focus}`,
     `- Enfoque de ejercicio: ${weekData.exercise_tip}`,
     `- Foco del control: ${weekData.checkup_focus}`,
   ].join('\n');
