@@ -36,4 +36,4 @@ export const EMERGENCY_KEYWORDS = [
 ];
 
 export const RED_FLAG_MESSAGE =
-  'Los sintomas que describes pueden requerir atencion urgente. Contacta a tu equipo medico de inmediato o attendservicio de emergencias. Esta herramienta no puede evaluar tu situacion clinica.';
+  'Los síntomas que describes pueden requerir atención urgente. Contacta a tu equipo médico de inmediato o al servicio de emergencias. Esta herramienta no puede evaluar tu situación clínica.';
