@@ -34,6 +34,20 @@ test('el prompt cambia el enfasis en el primer trimestre', () => {
   assert.match(prompt, /ácido fólico/);
 });
 
+test('el prompt menciona los recordatorios que ya existen', () => {
+  const conRepetidos = buildReminderPrompt({
+    pregnancy: { current_week: 20 },
+    count: 3,
+    existingTitles: ['Camina 20 minutos', 'Bebe agua'],
+  });
+
+  assert.match(conRepetidos, /No repitas/);
+  assert.match(conRepetidos, /Camina 20 minutos/);
+
+  const sinRepetidos = buildReminderPrompt({ pregnancy: { current_week: 20 }, count: 3 });
+  assert.doesNotMatch(sinRepetidos, /No repitas/);
+});
+
 test('extrae el JSON aunque venga en un bloque de codigo', () => {
   const raw = 'Claro:\n```json\n{"reminders":[{"title":"Camina"}]}\n```';
 
