@@ -66,9 +66,39 @@ export async function openAiAnswer({ message, weekData, history = [], userName }
     temperature: env.ai.temperature,
   });
 
+
   const choice = completion.choices?.[0];
   const content = choice?.message?.content?.trim();
 
+  if (!content) throw new Error('Respuesta vacia del modelo');
+
+  return {
+    content,
+    provider: `openai:${env.ai.model}`,
+    tokensUsed: completion.usage?.total_tokens ?? 0,
+  };
+}
+
+/**
+ * Peticion de una sola respuesta para tareas que no son conversacionales
+ * (por ejemplo, planificar recordatorios). Devuelve el texto tal cual: quien
+ * la usa se encarga de interpretarlo y de validarlo.
+ */
+export async function openAiJson({ system, user, maxTokens = 500, temperature = 0.5 }) {
+  const sdk = getClient();
+  if (!sdk) throw new Error('OPENAI_API_KEY no configurada');
+
+  const completion = await sdk.chat.completions.create({
+    model: env.ai.model,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    max_tokens: maxTokens,
+    temperature,
+  });
+
+  const content = completion.choices?.[0]?.message?.content?.trim();
   if (!content) throw new Error('Respuesta vacia del modelo');
 
   return {
