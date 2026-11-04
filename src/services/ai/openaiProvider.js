@@ -59,6 +59,21 @@ export function isOpenAiConfigured() {
   return Boolean(env.ai.apiKey);
 }
 
+/**
+ * Si el modelo se queda sin tokens a mitad de una frase, se recorta hasta el
+ * ultimo punto para no mostrar una respuesta cortada. Si el corte dejaria
+ * demasiado poco texto, se deja tal cual.
+ */
+export function trimToLastSentence(text) {
+  const cleaned = String(text ?? '').trim();
+  const match = cleaned.match(/^[\s\S]*[.!?](?=\s|$)/);
+
+  if (!match) return cleaned;
+
+  const sentence = match[0].trim();
+  return sentence.length >= 40 ? sentence : cleaned;
+}
+
 export async function openAiAnswer({ message, weekData, history = [], userName, maxTokens, quick }) {
   const sdk = getClient();
   if (!sdk) throw new Error('OPENAI_API_KEY no configurada');
@@ -72,9 +87,12 @@ export async function openAiAnswer({ message, weekData, history = [], userName, 
 
 
   const choice = completion.choices?.[0];
-  const content = choice?.message?.content?.trim();
+  const raw = choice?.message?.content?.trim();
 
-  if (!content) throw new Error('Respuesta vacia del modelo');
+  if (!raw) throw new Error('Respuesta vacia del modelo');
+
+  const content =
+    choice?.finish_reason === 'length' ? trimToLastSentence(raw) : raw;
 
   return {
     content,
