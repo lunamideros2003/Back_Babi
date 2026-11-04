@@ -150,14 +150,14 @@ export function normalizePlan(raw, { count = 5 } = {}) {
  * disponible o cuando la respuesta no sirve, para que quien llama decida el
  * respaldo.
  */
-export async function planReminders({ pregnancy, count = 5 }) {
+export async function planReminders({ pregnancy, count = 5, existingTitles = [] }) {
   if (!pregnancy) return null;
   if (env.ai.provider === 'local' || !isOpenAiConfigured()) return null;
 
   try {
     const { content, provider, tokensUsed } = await openAiJson({
       system: SYSTEM_PROMPT,
-      user: buildReminderPrompt({ pregnancy, count }),
+      user: buildReminderPrompt({ pregnancy, count, existingTitles }),
       maxTokens: 700,
       temperature: 0.6,
     });
