@@ -55,14 +55,14 @@ export function isOpenAiConfigured() {
   return Boolean(env.ai.apiKey);
 }
 
-export async function openAiAnswer({ message, weekData, history = [], userName }) {
+export async function openAiAnswer({ message, weekData, history = [], userName, maxTokens }) {
   const sdk = getClient();
   if (!sdk) throw new Error('OPENAI_API_KEY no configurada');
 
   const completion = await sdk.chat.completions.create({
     model: env.ai.model,
     messages: buildMessages({ message, weekData, history, userName }),
-    max_tokens: env.ai.maxTokens,
+    max_tokens: maxTokens ?? env.ai.maxTokens,
     temperature: env.ai.temperature,
   });
 
