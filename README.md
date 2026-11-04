@@ -137,6 +137,7 @@ Con token (`Authorization: Bearer <token>`):
 ```
 GET   /api/auth/me
 PATCH /api/auth/me
+GET   /api/weeks/around/:number
 GET   /api/pregnancy
 POST  /api/pregnancy
 PUT   /api/pregnancy
@@ -175,6 +176,35 @@ GET   /api/appointments/categories
 
 Respuestas con la forma `{ ok: true, ... }` o
 `{ ok: false, error: { code, message, details } }`.
+
+### Semanas y tamaños
+
+`GET /api/weeks/:number` solo acepta enteros entre 4 y 40; cualquier otro
+valor responde `404`. La respuesta incluye `trimester` además de la fila:
+
+```json
+{ "ok": true, "week": { "week_number": 37, "size_comparison": "una sandía pequeña" }, "trimester": "Tercer trimestre" }
+```
+
+Las comparaciones de tamaño son orientativas y siguen el peso y la longitud
+medios de cada semana. Se guardan con artículo para que la interfaz no tenga
+que adivinar el género: `una lenteja`, `un melón`, `una sandía pequeña`.
+
+| Semana | Comparación | Peso orientativo |
+|---|---|---|
+| 4 | una semilla de amapola | menos de 1 g |
+| 8 | una frambuesa | 1.5 g |
+| 12 | una lima | 14 g |
+| 16 | un aguacate | 100 g |
+| 20 | un plátano | 300 g |
+| 24 | una mazorca de maíz | 600 g |
+| 28 | una berenjena | 1005 g |
+| 32 | una calabaza | 1702 g |
+| 36 | una lechuga romana | 2622 g |
+| 37 | una sandía pequeña | 2859 g |
+| 38 | una sandía mediana | 3083 g |
+| 39 | una sandía grande | 3288 g |
+| 40 | una sandía muy grande | 3462 g |
 
 ### Asistente de la burbuja
 
