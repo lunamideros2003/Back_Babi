@@ -1,16 +1,15 @@
 import { toISODate, addDays } from '../utils/pregnancyMath.js';
-import { isOpenAiConfigured } from './ai/openaiProvider.js';
-import { DISCLAIMER } from '../config/disclaimers.js';
+import { planReminders } from './ai/reminderPlanner.js';
 
 const LOCAL_TEMPLATES = [
-  { title: 'Toma tu acido folico', category: 'alimentacion', description: 'La vitamina B9 es clave en el primer trimestre. Tomala con el desayuno.' },
-  { title: 'Bebe un vaso de agua', category: 'alimentacion', description: 'Mantenete hidratada: ayuda con el estreñimiento y las nauseas.' },
-  { title: 'Camina 20 minutos', category: 'ejercicio', description: 'Una caminata suave mejora la circulacion y el animo.' },
-  { title: 'Registra tus movimientos', category: 'desarrollo', description: 'Anota la hora de los primeros movimientos del bebe para ver su patron.' },
+  { title: 'Toma tu ácido fólico', category: 'alimentacion', description: 'La vitamina B9 es clave en el primer trimestre. Tómala con el desayuno.' },
+  { title: 'Bebe un vaso de agua', category: 'alimentacion', description: 'Mantente hidratada: ayuda con el estreñimiento y las náuseas.' },
+  { title: 'Camina 20 minutos', category: 'ejercicio', description: 'Una caminata suave mejora la circulación y el ánimo.' },
+  { title: 'Registra tus movimientos', category: 'desarrollo', description: 'Anota la hora de los primeros movimientos del bebé para ver su patrón.' },
   { title: 'Prepara la maleta del hospital', category: 'parto', description: 'A partir de la semana 32 conviene tenerla lista.' },
-  { title: 'Respiracion profunda', category: 'emocional', description: 'Cuatro segundos inhalando y seis exhalando, tres veces.' },
+  { title: 'Respiración profunda', category: 'emocional', description: 'Cuatro segundos inhalando y seis exhalando, tres veces.' },
   { title: 'Revisa tu plan de parto', category: 'controles', description: 'Repasa contigo y con tu pareja las preferencias para el parto.' },
-  { title: 'Mide tu presion arterial', category: 'controles', description: 'Registra tus cifras y compartelas en tu proxima cita.' },
+  { title: 'Mide tu presión arterial', category: 'controles', description: 'Registra tus cifras y compártelas en tu próxima cita.' },
 ];
 
 function pickTemplates(week, count) {
@@ -26,42 +25,36 @@ function pickTemplates(week, count) {
   return scored.sort((a, b) => b.score - a.score).slice(0, count);
 }
 
-function aiTemplates(week, trimester) {
-  return [
-    `Esta en tu semana ${week} (${trimester}).`,
-    `Sugerencia: ${LOCAL_TEMPLATES[week % LOCAL_TEMPLATES.length].description}`,
-    DISCLAIMER,
-  ].join('\n');
-}
-
 /**
- * Personalized reminders. Uses the LLM when available, otherwise a
- * deterministic template so the feature always returns something useful.
+ * Recordatorios personalizados.
+ *
+ * Primero se piden al modelo, que conoce la semana y el trimestre. Si no hay
+ * modelo configurado, si falla o si devuelve algo inválido, se usan las
+ * plantillas locales: la función siempre devuelve algo útil.
  */
 export async function generateReminders({ pregnancy, count = 5 }) {
   if (!pregnancy) return [];
 
-  const week = pregnancy.current_week;
-  const trimester =
-    week <= 13 ? 'primer trimestre' : week <= 27 ? 'segundo trimestre' : 'tercer trimestre';
-
-  const suggestions = pickTemplates(week, count);
   const dueDate = toISODate(addDays(new Date(), 1));
 
-  return suggestions.map((template, index) => ({
+  const ai = await planReminders({ pregnancy, count });
+
+  if (ai) {
+    return ai.items.map((item, index) => ({
+      ...item,
+      due_at: dueDate,
+      source: 'ai',
+      offset_hours: index,
+    }));
+  }
+
+  return pickTemplates(pregnancy.current_week, count).map((template, index) => ({
     title: template.title,
     description: template.description,
     category: template.category,
     due_at: dueDate,
     recurrence: 'daily',
-    source: 'ai',
+    source: 'template',
     offset_hours: index,
   }));
 }
-
-export function reminderNote(pregnancy) {
-  if (!pregnancy) return '';
-  return aiTemplates(pregnancy.current_week, 'trimestre actual');
-}
-
-export { isOpenAiConfigured };
