@@ -17,6 +17,61 @@ router.use(requireAuth);
 // La IA gratuita tiene un tope por minuto: se limita por usuaria.
 const LIMITE_POR_MINUTO = 20;
 
+// El chat de la pagina admite preguntas largas; la burbuja, respuestas cortas.
+const MENSAJE_MAXIMO = 1000;
+const MENSAJE_MAXIMO_RAPIDO = 500;
+
+function readMessage(body, maxLength = MENSAJE_MAXIMO) {
+  const message = String(body?.message ?? '').trim();
+
+  if (message.length < 2) {
+    throw new ValidationError([{ field: 'message', message: 'Escribe una pregunta.' }]);
+  }
+
+  if (message.length > maxLength) {
+    throw new ValidationError([
+      { field: 'message', message: `La pregunta es demasiado larga (máximo ${maxLength}).` },
+    ]);
+  }
+
+  return message;
+}
+
+/**
+ * El chat de la pagina y la burbuja comparten el mismo limite: preguntar en
+ * un sitio tambien cuenta en el otro, asi no se duplica el consumo gratuito.
+ */
+function enforceRateLimit(req, res, scope = 'chat') {
+  const key = `${scope}:${req.user.id}`;
+
+  if (consume(key, LIMITE_POR_MINUTO)) return;
+
+  const espera = reintentarEn(key);
+  res.set('Retry-After', String(espera));
+  throw new AppError(
+    `Has hecho demasiadas preguntas seguidas. Espera ${espera} segundos y vuelve a intentarlo.`,
+    429,
+    'RATE_LIMITED',
+  );
+}
+
+function replyBody(answer) {
+  return {
+    role: 'assistant',
+    content: answer.content,
+    category: answer.category,
+    category_label: answer.categoryLabel,
+    confidence: answer.confidence,
+    provider: answer.provider,
+    tokens_used: answer.tokensUsed,
+    is_emergency: Boolean(answer.isEmergency),
+    is_redirect: Boolean(answer.isRedirect),
+    is_fallback: Boolean(answer.isFallback),
+    disclaimer: answer.disclaimer,
+    pregnancy_week: answer.pregnancyWeek,
+  };
+}
+
 router.get('/categories', async (_req, res) => {
   res.json({
     ok: true,
@@ -65,26 +120,8 @@ router.get('/history', async (req, res) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const message = String(req.body?.message ?? '').trim();
-
-    if (message.length < 2) {
-      throw new ValidationError([{ field: 'message', message: 'Escribe una pregunta.' }]);
-    }
-    if (message.length > 1000) {
-      throw new ValidationError([
-        { field: 'message', message: 'La pregunta es demasiado larga (maximo 1000).' },
-      ]);
-    }
-
-    if (!consume(`chat:${req.user.id}`, LIMITE_POR_MINUTO)) {
-      const espera = reintentarEn(`chat:${req.user.id}`);
-      res.set('Retry-After', String(espera));
-      throw new AppError(
-        `Has hecho demasiadas preguntas seguidas. Espera ${espera} segundos y vuelve a intentarlo.`,
-        429,
-        'RATE_LIMITED',
-      );
-    }
+    const message = readMessage(req.body);
+    enforceRateLimit(req, res);
 
     const pregnancy = await repo.getPregnancy(req.user.id);
 
@@ -114,21 +151,49 @@ router.post('/', async (req, res, next) => {
     res.json({
       ok: true,
       user_message: { id: userMessageId, role: 'user', content: message },
-      reply: {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: answer.content,
-        category: answer.category,
-        category_label: answer.categoryLabel,
-        confidence: answer.confidence,
-        provider: answer.provider,
-        tokens_used: answer.tokensUsed,
-        is_emergency: Boolean(answer.isEmergency),
-        is_redirect: Boolean(answer.isRedirect),
-        is_fallback: Boolean(answer.isFallback),
-        disclaimer: answer.disclaimer,
-        pregnancy_week: answer.pregnancyWeek,
-      },
+      reply: { id: assistantMessageId, ...replyBody(answer) },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/quick', async (req, res, next) => {
+  try {
+    const message = readMessage(req.body, MENSAJE_MAXIMO_RAPIDO);
+    enforceRateLimit(req, res);
+
+    const pregnancy = await repo.getPregnancy(req.user.id);
+
+    await persistMessage({
+      userId: req.user.id,
+      role: 'user',
+      content: message,
+      pregnancyWeek: pregnancy?.current_week ?? null,
+    });
+
+    const answer = await getAssistantReply({
+      user: req.user,
+      pregnancy,
+      message,
+      historyLimit: 4,
+      maxTokens: 280,
+    });
+
+    const assistantMessageId = await persistMessage({
+      userId: req.user.id,
+      role: 'assistant',
+      content: answer.content,
+      category: answer.category,
+      pregnancyWeek: answer.pregnancyWeek,
+      provider: answer.provider,
+      tokensUsed: answer.tokensUsed,
+    });
+
+    res.json({
+      ok: true,
+      quick: true,
+      reply: { id: assistantMessageId, ...replyBody(answer) },
     });
   } catch (error) {
     next(error);
