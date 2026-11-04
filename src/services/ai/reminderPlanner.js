@@ -39,7 +39,7 @@ export function trimesterLabel(week) {
   return 'tercer trimestre';
 }
 
-export function buildReminderPrompt({ pregnancy, count }) {
+export function buildReminderPrompt({ pregnancy, count, existingTitles = [] }) {
   const week = Number(pregnancy?.current_week ?? 0);
 
   const lines = [
@@ -53,6 +53,11 @@ export function buildReminderPrompt({ pregnancy, count }) {
     lines.push('Énfasis: movimientos del bebé, ejercicio suave y controles.');
   } else {
     lines.push('Énfasis: preparación del parto, maleta del hospital y descanso.');
+  }
+
+  const repetidos = existingTitles.filter(Boolean).slice(0, 12);
+  if (repetidos.length > 0) {
+    lines.push(`No repitas estos recordatorios que ya tiene activos: ${repetidos.join('; ')}.`);
   }
 
   lines.push(`Categorías disponibles: ${REMINDER_KEYS.join(', ')}.`);
