@@ -2,7 +2,13 @@ import { Router } from 'express';
 import { all, get } from '../db/connection.js';
 import { requireAuth } from '../middleware/auth.js';
 import { NotFoundError } from '../utils/errors.js';
-import { calculatePregnancy, dueDateFromLastPeriod, dueDateFromWeek } from '../utils/pregnancyMath.js';
+import {
+  calculatePregnancy,
+  dueDateFromLastPeriod,
+  dueDateFromWeek,
+  parseWeekNumber,
+  trimesterName,
+} from '../utils/pregnancyMath.js';
 
 const router = Router();
 
@@ -16,7 +22,11 @@ router.get('/calculate', async (req, res) => {
 
   let resolved = dueDate ?? null;
   if (!resolved && lastPeriodDate) resolved = dueDateFromLastPeriod(lastPeriodDate);
-  if (!resolved && week) resolved = dueDateFromWeek(Number(week));
+  if (!resolved && week) {
+    const number = parseWeekNumber(week);
+    if (number === null) throw new NotFoundError('Semana');
+    resolved = dueDateFromWeek(number);
+  }
   if (!resolved) {
     throw new NotFoundError('Parametro de calculo');
   }
@@ -24,17 +34,10 @@ router.get('/calculate', async (req, res) => {
   res.json({ ok: true, pregnancy: calculatePregnancy({ dueDate: resolved }) });
 });
 
-router.get('/:number', async (req, res) => {
-  const number = Number(req.params.number);
-  const week = await get('SELECT * FROM weeks WHERE week_number = :number', { number });
-
-  if (!week) throw new NotFoundError('Semana');
-
-  res.json({ ok: true, week });
-});
-
 router.get('/around/:number', requireAuth, async (req, res) => {
-  const center = Number(req.params.number);
+  const center = parseWeekNumber(req.params.number);
+  if (center === null) throw new NotFoundError('Semana');
+
   const weeks = await all(
     `SELECT * FROM weeks
      WHERE week_number BETWEEN :from AND :to
@@ -42,6 +45,17 @@ router.get('/around/:number', requireAuth, async (req, res) => {
     { from: Math.max(4, center - 1), to: Math.min(40, center + 1) },
   );
   res.json({ ok: true, weeks });
+});
+
+router.get('/:number', async (req, res) => {
+  const number = parseWeekNumber(req.params.number);
+  if (number === null) throw new NotFoundError('Semana');
+
+  const week = await get('SELECT * FROM weeks WHERE week_number = :number', { number });
+
+  if (!week) throw new NotFoundError('Semana');
+
+  res.json({ ok: true, week, trimester: trimesterName(number) });
 });
 
 export default router;
