@@ -56,10 +56,11 @@ export async function ensureDatabase() {
   return await withRetry(async () => {
     await createTables();
 
-    const current = await get('SELECT COUNT(*) AS total FROM weeks');
-    const existing = Number(current?.total ?? 0);
-
-    if (existing < weeks.length) await seedWeeks();
+    // El contenido educativo cambia con el tiempo (por ejemplo, los tamaños de
+    // comparación). Si solo se sembrara la primera vez, una base ya creada se
+    // quedaría con el texto viejo. El upsert es barato y no toca datos de las
+    // usuarias, así que se refresca en cada arranque.
+    await seedWeeks();
 
     const final = await get('SELECT COUNT(*) AS total FROM weeks');
 
