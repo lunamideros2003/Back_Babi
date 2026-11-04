@@ -3,6 +3,7 @@ import * as repo from '../repositories/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/index.js';
 import { generateReminders } from '../services/reminderService.js';
+import { REMINDER_CATEGORIES, RECURRENCE_OPTIONS } from '../config/reminders.js';
 import { ValidationError } from '../utils/errors.js';
 
 const router = Router();
@@ -19,6 +20,10 @@ const reminderSchema = {
 router.get('/', async (req, res) => {
   const includeCompleted = req.query.all === 'true';
   res.json({ ok: true, reminders: await repo.listReminders(req.user.id, { includeCompleted }) });
+});
+
+router.get('/categories', (_req, res) => {
+  res.json({ ok: true, categories: REMINDER_CATEGORIES, recurrences: RECURRENCE_OPTIONS });
 });
 
 router.post('/', validate(reminderSchema), async (req, res) => {
