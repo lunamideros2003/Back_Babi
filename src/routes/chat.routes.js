@@ -1,9 +1,13 @@
 import { Router } from 'express';
+import env from '../config/env.js';
 import * as repo from '../repositories/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getAssistantReply, persistMessage } from '../services/ai/chatService.js';
 import { CATEGORIES, classifyQuestion } from '../services/ai/classifier.js';
 import { faqQuestions } from '../services/ai/knowledgeBase.js';
+import { buildWelcome } from '../services/ai/welcome.js';
+import { isOpenAiConfigured } from '../services/ai/openaiProvider.js';
+import { DISCLAIMER } from '../config/disclaimers.js';
 import { ValidationError, AppError } from '../utils/errors.js';
 import { consume, reintentarEn } from '../utils/rateLimit.js';
 
@@ -18,6 +22,25 @@ router.get('/categories', async (_req, res) => {
     ok: true,
     categories: CATEGORIES.map(({ key, label }) => ({ key, label })),
     faq: faqQuestions,
+  });
+});
+
+router.get('/welcome', async (req, res) => {
+  const pregnancy = await repo.getPregnancy(req.user.id);
+  const week = pregnancy?.current_week;
+
+  const welcome = buildWelcome({ name: req.user.name, week });
+  const ready = isOpenAiConfigured();
+
+  res.json({
+    ok: true,
+    ...welcome,
+    ai: {
+      ready,
+      mode: ready ? 'model' : 'local',
+      model: ready ? env.ai.model : null,
+    },
+    disclaimer: DISCLAIMER,
   });
 });
 
