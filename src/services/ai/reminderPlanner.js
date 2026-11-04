@@ -77,21 +77,21 @@ export function parseJsonObject(text) {
 
   const objectStart = cleaned.indexOf('{');
   const objectEnd = cleaned.lastIndexOf('}');
-  if (objectStart !== -1 && objectEnd > objectStart) {
-    try {
-      return JSON.parse(cleaned.slice(objectStart, objectEnd + 1));
-    } catch {
-      /* se intenta como lista */
-    }
-  }
-
   const arrayStart = cleaned.indexOf('[');
   const arrayEnd = cleaned.lastIndexOf(']');
-  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+
+  // Se prueba primero el delimitador que aparece antes: si el modelo
+  // devuelve una lista, el corchete va delante de las llaves.
+  const ranges = [];
+  if (objectStart !== -1 && objectEnd > objectStart) ranges.push([objectStart, objectEnd]);
+  if (arrayStart !== -1 && arrayEnd > arrayStart) ranges.push([arrayStart, arrayEnd]);
+  ranges.sort((a, b) => a[0] - b[0]);
+
+  for (const [start, end] of ranges) {
     try {
-      return JSON.parse(cleaned.slice(arrayStart, arrayEnd + 1));
+      return JSON.parse(cleaned.slice(start, end + 1));
     } catch {
-      /* sin JSON legible */
+      /* se intenta el siguiente */
     }
   }
 
