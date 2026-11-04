@@ -37,7 +37,10 @@ router.post('/generate', async (req, res, next) => {
       ]);
     }
 
-    const suggestions = await generateReminders({ pregnancy, count });
+    const existing = await repo.listReminders(req.user.id);
+    const existingTitles = existing.map((item) => item.title).filter(Boolean);
+
+    const suggestions = await generateReminders({ pregnancy, count, existingTitles });
 
     const created = [];
     for (const item of suggestions) {

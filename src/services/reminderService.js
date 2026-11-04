@@ -32,12 +32,12 @@ function pickTemplates(week, count) {
  * modelo configurado, si falla o si devuelve algo inválido, se usan las
  * plantillas locales: la función siempre devuelve algo útil.
  */
-export async function generateReminders({ pregnancy, count = 5 }) {
+export async function generateReminders({ pregnancy, count = 5, existingTitles = [] }) {
   if (!pregnancy) return [];
 
   const dueDate = toISODate(addDays(new Date(), 1));
 
-  const ai = await planReminders({ pregnancy, count });
+  const ai = await planReminders({ pregnancy, count, existingTitles });
 
   if (ai) {
     return ai.items.map((item, index) => ({
