@@ -1,4 +1,9 @@
-import { REMINDER_KEYS, RECURRENCE_OPTIONS } from '../../config/reminders.js';
+import {
+  REMINDER_KEYS,
+  RECURRENCE_OPTIONS,
+  isReminderCategory,
+  isRecurrence,
+} from '../../config/reminders.js';
 
 /**
  * Planificador de recordatorios con el modelo de lenguaje.
@@ -89,4 +94,46 @@ export function parseJsonObject(text) {
   }
 
   return null;
+}
+
+const MAX_TITLE = 140;
+const MAX_DESCRIPTION = 400;
+
+function cleanText(value, max) {
+  return String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+/**
+ * Convierte lo que devolvio el modelo en recordatorios seguros.
+ * Descarta lo que no cumple y completa los campos opcionales.
+ */
+export function normalizePlan(raw, { count = 5 } = {}) {
+  const list = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.reminders)
+      ? raw.reminders
+      : [];
+
+  const items = [];
+
+  for (const entry of list) {
+    if (!entry || typeof entry !== 'object') continue;
+
+    const title = cleanText(entry.title, MAX_TITLE);
+    if (title.length < 3) continue;
+
+    items.push({
+      title,
+      description: cleanText(entry.description, MAX_DESCRIPTION),
+      category: isReminderCategory(entry.category) ? entry.category : 'general',
+      recurrence: isRecurrence(entry.recurrence) ? entry.recurrence : 'none',
+    });
+
+    if (items.length >= count) break;
+  }
+
+  return items;
 }
