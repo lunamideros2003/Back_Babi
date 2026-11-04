@@ -5,6 +5,8 @@
  * y no gaste tokens. Las preguntas cambian con el trimestre.
  */
 
+import { trimesterOf } from '../../utils/pregnancyMath.js';
+
 export const WELCOME_PHRASE = 'Hazme preguntas sobre tu embarazo y resolvámoslas juntas.';
 
 export const SUGGESTIONS = {
@@ -35,10 +37,11 @@ export const SUGGESTIONS = {
 };
 
 export function stageFor(week) {
-  if (!Number.isFinite(week)) return 'general';
-  if (week <= 13) return 'early';
-  if (week <= 27) return 'middle';
-  return 'late';
+  const trimester = trimesterOf(week);
+  if (trimester === 1) return 'early';
+  if (trimester === 2) return 'middle';
+  if (trimester === 3) return 'late';
+  return 'general';
 }
 
 export function buildGreeting(name) {
