@@ -51,7 +51,13 @@ router.get('/around/:number', requireAuth, async (req, res) => {
      ORDER BY week_number ASC`,
     { from: Math.max(4, center - 1), to: Math.min(40, center + 1) },
   );
-  res.json({ ok: true, weeks });
+  res.json({
+    ok: true,
+    weeks: weeks.map((week) => ({
+      ...week,
+      trimester: trimesterName(week.week_number),
+    })),
+  });
 });
 
 router.get('/:number', async (req, res) => {
