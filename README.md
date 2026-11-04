@@ -145,12 +145,15 @@ POST  /api/appointments
 PUT   /api/appointments/:id
 DELETE /api/appointments/:id
 GET   /api/reminders?all=true
+GET   /api/reminders/categories
 POST  /api/reminders
 POST  /api/reminders/generate
 PATCH /api/reminders/:id/toggle
 DELETE /api/reminders/:id
+GET   /api/chat/welcome
 GET   /api/chat/history
 POST  /api/chat
+POST  /api/chat/quick
 POST  /api/chat/classify
 GET   /api/chat/categories
 GET   /api/bot/questions
@@ -172,6 +175,27 @@ GET   /api/appointments/categories
 
 Respuestas con la forma `{ ok: true, ... }` o
 `{ ok: false, error: { code, message, details } }`.
+
+### Asistente de la burbuja
+
+`GET /api/chat/welcome` devuelve el saludo y cuatro sugerencias adaptadas al
+trimestre. No llama al modelo, asi que la ventana abre al instante:
+
+```json
+{
+  "ok": true,
+  "greeting": "Hola, Luna. Hazme preguntas sobre tu embarazo y resolvámoslas juntas.",
+  "suggestions": ["¿Qué llevo a la maleta del hospital?", "..."],
+  "stage": "late",
+  "week": 34,
+  "ai": { "ready": true, "mode": "model", "model": "qwen/qwen3.8-27b" }
+}
+```
+
+`POST /api/chat/quick` recibe `{ "message": "..." }` (maximo 500 caracteres) y
+responde con el mismo formato que `POST /api/chat`, pero con historial corto y
+una respuesta mas breve. Comparte el limite de 20 preguntas por minuto con el
+chat de la pagina.
 
 ### Codigos de error
 
