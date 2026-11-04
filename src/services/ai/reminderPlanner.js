@@ -6,6 +6,7 @@ import {
   isReminderCategory,
   isRecurrence,
 } from '../../config/reminders.js';
+import { trimesterName } from '../../utils/pregnancyMath.js';
 
 /**
  * Planificador de recordatorios con el modelo de lenguaje.
@@ -33,10 +34,8 @@ Reglas:
 8. Escribe en español neutro y tutea a la usuaria.`;
 
 export function trimesterLabel(week) {
-  if (!Number.isFinite(week)) return 'trimestre desconocido';
-  if (week <= 13) return 'primer trimestre';
-  if (week <= 27) return 'segundo trimestre';
-  return 'tercer trimestre';
+  const name = trimesterName(week);
+  return name ? name.toLowerCase() : 'trimestre desconocido';
 }
 
 export function buildReminderPrompt({ pregnancy, count, existingTitles = [] }) {
