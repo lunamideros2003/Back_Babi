@@ -1,3 +1,5 @@
+import env from '../../config/env.js';
+import { openAiJson, isOpenAiConfigured } from './openaiProvider.js';
 import {
   REMINDER_KEYS,
   RECURRENCE_OPTIONS,
@@ -136,4 +138,30 @@ export function normalizePlan(raw, { count = 5 } = {}) {
   }
 
   return items;
+}
+
+/**
+ * Pide los recordatorios al modelo. Devuelve `null` cuando no hay modelo
+ * disponible o cuando la respuesta no sirve, para que quien llama decida el
+ * respaldo.
+ */
+export async function planReminders({ pregnancy, count = 5 }) {
+  if (!pregnancy) return null;
+  if (env.ai.provider === 'local' || !isOpenAiConfigured()) return null;
+
+  try {
+    const { content, provider, tokensUsed } = await openAiJson({
+      system: SYSTEM_PROMPT,
+      user: buildReminderPrompt({ pregnancy, count }),
+      maxTokens: 700,
+      temperature: 0.6,
+    });
+
+    const items = normalizePlan(parseJsonObject(content), { count });
+    if (items.length === 0) return null;
+
+    return { items, provider, tokensUsed };
+  } catch {
+    return null;
+  }
 }
