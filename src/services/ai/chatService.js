@@ -35,10 +35,17 @@ async function loadHistory(userId, limit = 6) {
  * Single entry point for every AI interaction.
  * Order matters: safety first, then classification, then the model.
  */
-export async function getAssistantReply({ user, pregnancy, message, history }) {
+export async function getAssistantReply({
+  user,
+  pregnancy,
+  message,
+  history,
+  historyLimit = 6,
+  maxTokens,
+}) {
   const weekData = await loadWeekContext(pregnancy);
   const classification = classifyQuestion(message);
-  const conversation = history ?? (await loadHistory(user.id));
+  const conversation = history ?? (await loadHistory(user.id, historyLimit));
 
   const base = {
     userId: user.id,
@@ -75,6 +82,7 @@ export async function getAssistantReply({ user, pregnancy, message, history }) {
     weekData,
     history: conversation,
     userName: user.name,
+    maxTokens,
   };
 
   if (env.ai.provider === 'local' || !isOpenAiConfigured()) {
