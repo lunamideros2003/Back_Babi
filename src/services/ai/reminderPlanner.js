@@ -54,3 +54,39 @@ export function buildReminderPrompt({ pregnancy, count }) {
 }
 
 export { SYSTEM_PROMPT };
+
+/**
+ * Extrae el primer JSON que aparezca en la respuesta del modelo.
+ *
+ * Los modelos pequeños a veces envuelven el objeto en un bloque de código o
+ * agregan una frase antes; se recorta sin depender de que sean perfectos.
+ */
+export function parseJsonObject(text) {
+  if (!text) return null;
+
+  const cleaned = String(text)
+    .replace(/```(?:json)?/gi, '')
+    .trim();
+
+  const objectStart = cleaned.indexOf('{');
+  const objectEnd = cleaned.lastIndexOf('}');
+  if (objectStart !== -1 && objectEnd > objectStart) {
+    try {
+      return JSON.parse(cleaned.slice(objectStart, objectEnd + 1));
+    } catch {
+      /* se intenta como lista */
+    }
+  }
+
+  const arrayStart = cleaned.indexOf('[');
+  const arrayEnd = cleaned.lastIndexOf(']');
+  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+    try {
+      return JSON.parse(cleaned.slice(arrayStart, arrayEnd + 1));
+    } catch {
+      /* sin JSON legible */
+    }
+  }
+
+  return null;
+}
