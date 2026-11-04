@@ -177,7 +177,8 @@ router.post('/quick', async (req, res, next) => {
       pregnancy,
       message,
       historyLimit: 4,
-      maxTokens: 280,
+      maxTokens: 380,
+      quick: true,
     });
 
     const assistantMessageId = await persistMessage({
