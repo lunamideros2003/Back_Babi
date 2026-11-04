@@ -14,7 +14,14 @@ const router = Router();
 
 router.get('/', async (_req, res) => {
   const weeks = await all('SELECT * FROM weeks ORDER BY week_number ASC');
-  res.json({ ok: true, total: weeks.length, weeks });
+  res.json({
+    ok: true,
+    total: weeks.length,
+    weeks: weeks.map((week) => ({
+      ...week,
+      trimester: trimesterName(week.week_number),
+    })),
+  });
 });
 
 router.get('/calculate', async (req, res) => {
