@@ -17,11 +17,15 @@ Reglas innegociables:
 8. Si la usuaria pregunta por su semana actual, usa el contexto semanal proporcionado.
 9. Escribe TEXTO PLANO: nunca uses asteriscos, negritas, encabezados ni símbolos markdown. Las listas van con guiones simples (-) o números.`;
 
-function buildMessages({ message, weekData, history, userName }) {
+function buildMessages({ message, weekData, history, userName, quick }) {
+  const extra = quick
+    ? '\n\nModo burbuja: responde en máximo tres frases cortas o tres puntos. Evita listas largas.'
+    : '';
+
   const messages = [
     {
       role: 'system',
-      content: `${SYSTEM_PROMPT}\n\n${buildGroundingContext(weekData, message)}\n\nUsuario: ${userName || 'sin nombre'}.`,
+      content: `${SYSTEM_PROMPT}${extra}\n\n${buildGroundingContext(weekData, message)}\n\nUsuario: ${userName || 'sin nombre'}.`,
     },
   ];
 
@@ -55,13 +59,13 @@ export function isOpenAiConfigured() {
   return Boolean(env.ai.apiKey);
 }
 
-export async function openAiAnswer({ message, weekData, history = [], userName, maxTokens }) {
+export async function openAiAnswer({ message, weekData, history = [], userName, maxTokens, quick }) {
   const sdk = getClient();
   if (!sdk) throw new Error('OPENAI_API_KEY no configurada');
 
   const completion = await sdk.chat.completions.create({
     model: env.ai.model,
-    messages: buildMessages({ message, weekData, history, userName }),
+    messages: buildMessages({ message, weekData, history, userName, quick }),
     max_tokens: maxTokens ?? env.ai.maxTokens,
     temperature: env.ai.temperature,
   });

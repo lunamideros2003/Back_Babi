@@ -42,6 +42,7 @@ export async function getAssistantReply({
   history,
   historyLimit = 6,
   maxTokens,
+  quick = false,
 }) {
   const weekData = await loadWeekContext(pregnancy);
   const classification = classifyQuestion(message);
@@ -83,6 +84,7 @@ export async function getAssistantReply({
     history: conversation,
     userName: user.name,
     maxTokens,
+    quick,
   };
 
   if (env.ai.provider === 'local' || !isOpenAiConfigured()) {
