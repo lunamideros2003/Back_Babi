@@ -50,21 +50,26 @@ export async function seedWeeks() {
   return await get('SELECT COUNT(*) AS total FROM weeks');
 }
 
+/**
+ * Deja el contenido educativo al dia. Se ejecuta en cada arranque porque el
+ * texto cambia con el tiempo (por ejemplo, los tamaños de comparación) y el
+ * upsert no toca los datos de las usuarias.
+ */
+export async function refreshWeeks() {
+  await seedWeeks();
+  const result = await get('SELECT COUNT(*) AS total FROM weeks');
+  return Number(result?.total ?? 0);
+}
+
 export async function ensureDatabase() {
   // The first connection after a cold start can be refused while the pooler
   // wakes up, so the whole bootstrap is retried instead of crashing at once.
   return await withRetry(async () => {
     await createTables();
 
-    // El contenido educativo cambia con el tiempo (por ejemplo, los tamaños de
-    // comparación). Si solo se sembrara la primera vez, una base ya creada se
-    // quedaría con el texto viejo. El upsert es barato y no toca datos de las
-    // usuarias, así que se refresca en cada arranque.
-    await seedWeeks();
+    const total = await refreshWeeks();
 
-    const final = await get('SELECT COUNT(*) AS total FROM weeks');
-
-    return { driver: DRIVER, weeks: Number(final?.total ?? 0), connection: await ping() };
+    return { driver: DRIVER, weeks: total, connection: await ping() };
   });
 }
 
