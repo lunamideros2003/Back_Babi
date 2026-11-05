@@ -1,5 +1,3 @@
-export const USER_PRINT = 'Hola %s, aqui tienes tu resumen de hoy.';
-
 export class AppError extends Error {
   constructor(message, statusCode = 500, code = 'INTERNAL_ERROR', details = null) {
     super(message);

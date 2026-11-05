@@ -5,11 +5,6 @@ export const LAST_WEEK = 40;
 
 const TRIMESTER_NAMES = ['Primer trimestre', 'Segundo trimestre', 'Tercer trimestre'];
 
-/**
- * Devuelve el numero de semana si es un entero dentro del rango que tiene
- * contenido (4 a 40). Cualquier otra cosa devuelve null, para que la ruta
- * responda 404 en vez de consultar NaN.
- */
 export function parseWeekNumber(value) {
   const number = Number(value);
 
@@ -19,7 +14,6 @@ export function parseWeekNumber(value) {
   return number;
 }
 
-/** 1, 2 o 3 segun la semana; null si no es un numero. */
 export function trimesterOf(week) {
   if (week === null || week === undefined || week === '') return null;
 
@@ -66,10 +60,6 @@ function startOfDay(date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-/**
- * Pregnancy math. week 1 starts on the first day of the last menstrual period.
- * Returns a safe summary so the client never has to recalculate.
- */
 export function calculatePregnancy({ dueDate, today = new Date() }) {
   const due = toDate(dueDate);
   if (!due) return null;
@@ -77,8 +67,7 @@ export function calculatePregnancy({ dueDate, today = new Date() }) {
   const startDate = addDays(due, -GESTATION_DAYS);
   const current = startOfDay(toDate(today));
   const rawElapsed = Math.round((current - startOfDay(startDate)) / MS_PER_DAY);
-  // Day 1 is the first day of the last menstrual period, so day 280 (the due
-  // date) still belongs to week 40. Clamping to 279 keeps that boundary right.
+
   const elapsedDays = Math.min(GESTATION_DAYS - 1, Math.max(0, rawElapsed));
   const daysLeft = Math.round((startOfDay(due) - current) / MS_PER_DAY);
 
@@ -109,7 +98,7 @@ export function dueDateFromLastPeriod(lastPeriodDate) {
 
 export function dueDateFromWeek(week, today = new Date()) {
   const number = Number(week);
-  // Una semana no numérica produciría una fecha inválida y un error 500.
+
   if (!Number.isInteger(number) || number < 1 || number > 42) return null;
 
   const base = toDate(today);

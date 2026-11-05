@@ -2,10 +2,6 @@ import { execSync } from 'node:child_process';
 
 const isWindows = process.platform === 'win32';
 
-/**
- * Reads the full command line of a process. Prefers the PowerShell CIM query
- * because wmic was removed in recent Windows versions.
- */
 export function readCommandLine(pid) {
   const attempts = isWindows
     ? [
@@ -20,17 +16,13 @@ export function readCommandLine(pid) {
       const output = execSync(command, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
       if (output) return output.replace(/^CommandLine=/, '').trim();
     } catch {
-      /* try the next strategy */
+
     }
   }
 
   return '';
 }
 
-/**
- * Finds the processes listening on a TCP port, with the project they belong to
- * so the developer can tell which application is holding it.
- */
 export function findPortOwners(port) {
   let pids = [];
 
