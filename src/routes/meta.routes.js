@@ -59,16 +59,16 @@ router.get('/ports', async (_req, res) => {
     backend: {
       port: env.port,
       url: `http://localhost:${env.port}`,
-      role: 'API de BabyTrack (no es el frontend)',
+      role: 'BabyTrack API (not the frontend)',
     },
     frontend: {
       port: 5180,
       url: 'http://localhost:5180',
-      role: 'Interfaz de BabyTrack',
+      role: 'BabyTrack interface',
     },
     tip:
-      'Si ves otra aplicacion en el navegador, estas en el puerto equivocado. ' +
-      `BabyTrack se abre en http://localhost:5180 y su API responde en http://localhost:${env.port}/api/health.`,
+      'If you see another application in the browser, you are on the wrong port. ' +
+      `BabyTrack opens at http://localhost:5180 and its API responds at http://localhost:${env.port}/api/health.`,
   });
 });
 
