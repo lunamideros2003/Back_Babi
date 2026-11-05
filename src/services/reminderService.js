@@ -25,13 +25,6 @@ function pickTemplates(week, count) {
   return scored.sort((a, b) => b.score - a.score).slice(0, count);
 }
 
-/**
- * Recordatorios personalizados.
- *
- * Primero se piden al modelo, que conoce la semana y el trimestre. Si no hay
- * modelo configurado, si falla o si devuelve algo inválido, se usan las
- * plantillas locales: la función siempre devuelve algo útil.
- */
 export async function generateReminders({ pregnancy, count = 5, existingTitles = [] }) {
   if (!pregnancy) return [];
 

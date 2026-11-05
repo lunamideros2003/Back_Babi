@@ -2,8 +2,6 @@ import env from '../../config/env.js';
 import { isOpenAiConfigured } from '../ai/openaiProvider.js';
 import { get } from '../../db/connection.js';
 
-// Local feedback rules. A table keyed by question id and option value keeps
-// this readable and lets a new question be added without touching a switch.
 const RULES = {
   q_energy: {
     low: 'Tu energia baja es muy comun porque el cuerpo trabaja doble. Descansa todo lo que puedas y aprovecha los ratos buenos para lo importante.',

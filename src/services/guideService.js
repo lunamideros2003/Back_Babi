@@ -1,11 +1,5 @@
 import { knowledgeBase } from './ai/knowledgeBase.js';
 
-/*
-  Agrupa la base de conocimiento existente en las cuatro categorias de la
-  guia prenatal. No se inventa contenido: se reutiliza el mismo material que
-  usa el asistente, solo se reorganiza y se le pone un titulo legible.
-*/
-
 const TITLES = {
   'que puedo comer': 'Qué puedo comer',
   'cuanto peso puedo ganar': 'Cuánto peso puedo ganar',

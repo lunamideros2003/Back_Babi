@@ -1,7 +1,3 @@
-// Question bank for the BabyTrack bot. The bot asks, the user answers, and the
-// bot replies with personalized educational feedback. Spanish copy, no claims
-// that go beyond general information.
-
 export const QUESTION_TYPES = {
   SINGLE: 'single',
   MULTI: 'multi',
