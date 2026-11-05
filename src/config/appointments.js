@@ -1,10 +1,3 @@
-/*
-  Categorias de control prenatal.
-
-  Viven en el backend para que el formulario y la API usen la misma lista: si
-  se anaden en un sitio, se anaden en los dos.
-*/
-
 export const APPOINTMENT_CATEGORIES = [
   { value: 'checkup', label: 'Control prenatal' },
   { value: 'ultrasound', label: 'Ecografía' },

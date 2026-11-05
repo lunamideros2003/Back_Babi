@@ -33,8 +33,8 @@ export async function createApp() {
       error: error.message,
       weeks: 0,
     };
-    console.error('[db] la base no esta disponible, el API arranca en modo degradado');
-    console.error(`[db] detalle: ${error.message}`);
+    console.error('[db] the database is unavailable, the API starts in degraded mode');
+    console.error(`[db] detail: ${error.message}`);
   }
 
   const app = express();

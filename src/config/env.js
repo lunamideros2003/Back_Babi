@@ -6,12 +6,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const rootDir = path.resolve(__dirname, '..', '..');
 
-/**
- * Encodes a piece of user info (user or password) so it is safe inside a URL.
- *
- * A password that already arrives percent-encoded is decoded first, so the
- * result is always the same and never double encoded.
- */
 function encodeUserInfo(value) {
   if (!value) return '';
 
@@ -19,27 +13,13 @@ function encodeUserInfo(value) {
   try {
     decoded = decodeURIComponent(value);
   } catch {
-    // A stray % that is not an escape sequence: keep it as it is.
+
     decoded = value;
   }
 
   return encodeURIComponent(decoded);
 }
 
-/**
- * Repairs the connection string of Supabase.
- *
- * Three things go wrong when the string is pasted by hand into a dashboard:
- *
- *  - the quotes that come along with the copy, or a stray space
- *  - `?sslmode=require`, which the postgres driver turns into a certificate
- *    check that the pooler does not satisfy
- *  - a password that was never percent-encoded, so a `#` or a `?` inside it
- *    breaks the URL and the driver answers "Invalid URL"
- *
- * Normalising here keeps the rest of the code free of special cases and
- * spares the user from hand-editing a long URL.
- */
 export function normalizeDatabaseUrl(value) {
   if (!value) return '';
 
@@ -57,12 +37,9 @@ export function normalizeDatabaseUrl(value) {
   const scheme = text.slice(0, schemeEnd + 3);
   const rest = text.slice(schemeEnd + 3);
 
-  // The user info ends at the last @, so an @ inside the password is safe.
   const atIndex = rest.lastIndexOf('@');
   const hostStart = atIndex === -1 ? 0 : atIndex + 1;
 
-  // The query string starts at the first ? that comes after the host, so a ?
-  // inside the password is not mistaken for the beginning of the query.
   const queryStart = rest.indexOf('?', hostStart);
 
   const credentials = atIndex === -1 ? '' : rest.slice(0, atIndex);
@@ -90,7 +67,7 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   databaseFile:
     process.env.DATABASE_FILE ?? path.join(rootDir, 'data', 'babytrack.sqlite'),
-  // When present, the app talks to Postgres (Supabase) instead of the local file.
+
   databaseUrl: normalizeDatabaseUrl(process.env.DATABASE_URL ?? ''),
   jwtSecret: process.env.JWT_SECRET ?? 'babytrack-dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
@@ -99,7 +76,7 @@ export const env = {
     .map((value) => value.trim())
     .filter(Boolean),
   ai: {
-    provider: process.env.AI_PROVIDER ?? 'auto', // auto | openai | local
+    provider: process.env.AI_PROVIDER ?? 'auto',
     apiKey: process.env.OPENAI_API_KEY ?? '',
     baseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
     model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',

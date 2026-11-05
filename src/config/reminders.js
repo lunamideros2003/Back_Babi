@@ -1,11 +1,3 @@
-/**
- * Recordatorios sugeridos por la asistente.
- *
- * Estas listas son la unica fuente de verdad: el modelo de lenguaje solo
- * puede elegir valores de aqui, y el backend descarta cualquier otro. Asi una
- * respuesta rara del modelo nunca llega a la base de datos.
- */
-
 export const REMINDER_CATEGORIES = [
   { key: 'alimentacion', label: 'Alimentación' },
   { key: 'ejercicio', label: 'Ejercicio' },

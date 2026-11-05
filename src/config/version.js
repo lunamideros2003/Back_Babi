@@ -2,14 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/*
-  Datos de la compilacion: version del proyecto, commit con el que se
-  desplego y momento en el que arranco el proceso.
-
-  El commit lo publica el servidor de despliegue. Si no esta disponible se
-  deja vacio, que es lo normal en desarrollo.
-*/
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', '..');
 
