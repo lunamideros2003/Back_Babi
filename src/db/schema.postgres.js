@@ -1,11 +1,3 @@
-/**
- * PostgreSQL schema. Same tables and columns as the SQLite schema, with
- * native Postgres types.
- *
- * Flag columns stay SMALLINT with a CHECK instead of BOOLEAN on purpose: the
- * application writes 0 and 1 in its queries, and keeping that identical across
- * both drivers means one set of queries works everywhere without coercion.
- */
 export const postgresSchema = `
 CREATE TABLE IF NOT EXISTS users (
   id            SERIAL PRIMARY KEY,

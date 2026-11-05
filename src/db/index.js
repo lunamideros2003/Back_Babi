@@ -3,13 +3,6 @@ import { schema } from './schema.js';
 import { postgresSchema } from './schema.postgres.js';
 import weeks from './data/weeks.js';
 
-/**
- * State of the database at boot.
- *
- * The HTTP service must come up even when the database is unreachable, so a
- * broken connection shows up as a readable diagnostic in `/api/health` and in
- * the logs instead of a container that keeps restarting.
- */
 export const bootState = {
   database: { ready: false, driver: DRIVER, error: null, weeks: 0 },
 };
@@ -50,11 +43,6 @@ export async function seedWeeks() {
   return await get('SELECT COUNT(*) AS total FROM weeks');
 }
 
-/**
- * Deja el contenido educativo al dia. Se ejecuta en cada arranque porque el
- * texto cambia con el tiempo (por ejemplo, los tamaños de comparación) y el
- * upsert no toca los datos de las usuarias.
- */
 export async function refreshWeeks() {
   await seedWeeks();
   const result = await get('SELECT COUNT(*) AS total FROM weeks');
@@ -62,8 +50,7 @@ export async function refreshWeeks() {
 }
 
 export async function ensureDatabase() {
-  // The first connection after a cold start can be refused while the pooler
-  // wakes up, so the whole bootstrap is retried instead of crashing at once.
+
   return await withRetry(async () => {
     await createTables();
 

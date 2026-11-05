@@ -7,9 +7,9 @@ try {
   const result = await seedWeeks();
 
   console.log(`Driver: ${DRIVER}`);
-  console.log(`Semanas cargadas: ${result.total}`);
+  console.log(`Weeks loaded: ${result.total}`);
 } catch (error) {
-  console.error('No se pudieron cargar las semanas:', error.message);
+  console.error('Could not load the weeks:', error.message);
   process.exitCode = 1;
 } finally {
   await closeDatabase();

@@ -8,8 +8,8 @@ const targets = [
 ];
 
 if (env.databaseUrl) {
-  console.log('DATABASE_URL esta definido: no se borra nada porque la base esta en Supabase.');
-  console.log('Para vaciar la base remota, usa el SQL Editor de Supabase o ejecuta:');
+  console.log('DATABASE_URL is set: nothing is deleted because the database lives in Supabase.');
+  console.log('To wipe the remote database, use the Supabase SQL Editor or run:');
   console.log('  npm run db:migrate -- --truncate');
 } else {
   let removed = 0;
@@ -21,6 +21,6 @@ if (env.databaseUrl) {
     }
   }
 
-  console.log(`Base de datos local eliminada (${removed} archivo/s).`);
-  console.log('Se recreara automaticamente al iniciar el servidor con: npm run dev');
+  console.log(`Local database deleted (${removed} file/s).`);
+  console.log('It will be recreated automatically when the server starts with: npm run dev');
 }

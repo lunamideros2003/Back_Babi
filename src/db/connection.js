@@ -4,17 +4,6 @@ import { DatabaseSync } from 'node:sqlite';
 import env from '../config/env.js';
 import { toPostgres } from './dialect.js';
 
-/**
- * Two drivers behind one API:
- *
- *  - sqlite   default, a local file, no setup needed
- *  - postgres used when DATABASE_URL points to Supabase (or any Postgres)
- *
- * The driver is chosen once at startup. Every call returns a promise because
- * the Postgres path is network based, even though the SQLite path resolves
- * immediately.
- */
-
 export const DRIVER = env.databaseUrl ? 'postgres' : 'sqlite';
 
 let sqlite = null;
@@ -44,19 +33,12 @@ async function getPool() {
   });
 
   pool.on('error', (error) => {
-    console.error('[db] error del pool de Postgres:', error.message);
+    console.error('[db] Postgres pool error:', error.message);
   });
 
   return pool;
 }
 
-/**
- * Runs `fn` until it succeeds or the attempts run out.
- *
- * A freshly booted container often reaches the database before the pooler is
- * ready to accept it. Retrying a few times turns that race into a short wait
- * instead of a crash loop.
- */
 export async function withRetry(fn, { attempts = 3, delayMs = 4000 } = {}) {
   let lastError = null;
 
@@ -66,7 +48,7 @@ export async function withRetry(fn, { attempts = 3, delayMs = 4000 } = {}) {
     } catch (error) {
       lastError = error;
       console.error(
-        `[db] intento ${attempt}/${attempts} fallido: ${error.message}`,
+        `[db] attempt ${attempt}/${attempts} failed: ${error.message}`,
       );
       if (attempt < attempts) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -86,7 +68,6 @@ function plainAll(rows) {
   return rows.map((row) => plain(row));
 }
 
-/** Runs a statement that may return rows. */
 async function query(sql, params = {}) {
   if (DRIVER === 'sqlite') {
     return getSqlite().prepare(sql).all(params);
@@ -99,7 +80,6 @@ async function query(sql, params = {}) {
   return result.rows;
 }
 
-/** Runs raw DDL. Several statements separated by semicolons are allowed. */
 export async function exec(sql) {
   if (DRIVER === 'sqlite') {
     getSqlite().exec(sql);
@@ -138,10 +118,6 @@ export async function all(sql, params = {}) {
   return plainAll(await query(sql, params));
 }
 
-/**
- * Runs `fn` inside a transaction. The connection used by `run`, `get` and
- * `all` inside the callback is the same one that opened the transaction.
- */
 export async function transaction(fn) {
   if (DRIVER === 'sqlite') {
     getSqlite().exec('BEGIN');
@@ -186,7 +162,6 @@ export async function closeDatabase() {
   }
 }
 
-/** Used by tests and diagnostics to confirm the driver is reachable. */
 export async function ping() {
   if (DRIVER === 'sqlite') {
     getSqlite().prepare('SELECT 1 AS ok').get();
