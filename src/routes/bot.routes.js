@@ -216,7 +216,6 @@ router.post('/sessions/:id/answers', async (req, res, next) => {
       { nextIndex, count: nextIndex, id: session.id },
     );
 
-    // Use the trimester from this answer as a fallback when no pregnancy is set.
     if (!session.pregnancy_week) {
       const estimated = weekForTrimester(storedValue);
       if (estimated) {
