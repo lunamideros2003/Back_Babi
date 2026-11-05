@@ -61,9 +61,9 @@ router.post('/generate', async (req, res, next) => {
       );
     }
 
-    const fuente = suggestions.some((item) => item.source === 'ai') ? 'ai' : 'template';
+    const source = suggestions.some((item) => item.source === 'ai') ? 'ai' : 'template';
 
-    res.status(201).json({ ok: true, source: fuente, reminders: created });
+    res.status(201).json({ ok: true, source, reminders: created });
   } catch (error) {
     next(error);
   }

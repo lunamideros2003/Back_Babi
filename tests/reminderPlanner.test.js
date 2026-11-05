@@ -9,7 +9,7 @@ import {
 } from '../src/services/ai/reminderPlanner.js';
 import { REMINDER_KEYS } from '../src/config/reminders.js';
 
-test('nombra el trimestre segun la semana', () => {
+test('names the trimester based on the week', () => {
   assert.equal(trimesterLabel(8), 'primer trimestre');
   assert.equal(trimesterLabel(13), 'primer trimestre');
   assert.equal(trimesterLabel(14), 'segundo trimestre');
@@ -18,7 +18,7 @@ test('nombra el trimestre segun la semana', () => {
   assert.equal(trimesterLabel(40), 'tercer trimestre');
 });
 
-test('el prompt incluye la semana, el trimestre y la cantidad', () => {
+test('the prompt includes the week, trimester and count', () => {
   const prompt = buildReminderPrompt({ pregnancy: { current_week: 30 }, count: 4 });
 
   assert.match(prompt, /Semana actual: 30 de 40/);
@@ -27,14 +27,14 @@ test('el prompt incluye la semana, el trimestre y la cantidad', () => {
   assert.match(prompt, /preparación del parto/);
 });
 
-test('el prompt cambia el enfasis en el primer trimestre', () => {
+test('the prompt shifts emphasis in the first trimester', () => {
   const prompt = buildReminderPrompt({ pregnancy: { current_week: 6 }, count: 3 });
 
   assert.match(prompt, /primer trimestre/);
   assert.match(prompt, /ácido fólico/);
 });
 
-test('el prompt menciona los recordatorios que ya existen', () => {
+test('the prompt mentions existing reminders', () => {
   const conRepetidos = buildReminderPrompt({
     pregnancy: { current_week: 20 },
     count: 3,
@@ -48,23 +48,23 @@ test('el prompt menciona los recordatorios que ya existen', () => {
   assert.doesNotMatch(sinRepetidos, /No repitas/);
 });
 
-test('extrae el JSON aunque venga en un bloque de codigo', () => {
+test('extracts JSON even inside a code block', () => {
   const raw = 'Claro:\n```json\n{"reminders":[{"title":"Camina"}]}\n```';
 
   assert.deepEqual(parseJsonObject(raw), { reminders: [{ title: 'Camina' }] });
 });
 
-test('acepta una lista suelta', () => {
+test('accepts a bare list', () => {
   assert.deepEqual(parseJsonObject('[{"title":"Camina"}]'), [{ title: 'Camina' }]);
 });
 
-test('devuelve null cuando no hay JSON', () => {
+test('returns null when there is no JSON', () => {
   assert.equal(parseJsonObject('lo siento, no puedo'), null);
   assert.equal(parseJsonObject(''), null);
   assert.equal(parseJsonObject(undefined), null);
 });
 
-test('normaliza los campos y descarta titulos vacios', () => {
+test('normalizes fields and drops empty titles', () => {
   const items = normalizePlan({
     reminders: [
       { title: '  Camina   20 minutos ', description: 'Mejora   la circulación' },
@@ -82,7 +82,7 @@ test('normaliza los campos y descarta titulos vacios', () => {
   assert.equal(items[1].recurrence, 'none');
 });
 
-test('respeta las categorias validas y el maximo pedido', () => {
+test('respects valid categories and the requested maximum', () => {
   const reminders = REMINDER_KEYS.map((category) => ({
     title: `Recordatorio ${category}`,
     category,
@@ -96,7 +96,7 @@ test('respeta las categorias validas y el maximo pedido', () => {
   assert.ok(items.every((item) => item.recurrence === 'daily'));
 });
 
-test('devuelve una lista vacia si la respuesta no trae nada', () => {
+test('returns an empty list when the response brings nothing', () => {
   assert.deepEqual(normalizePlan(null), []);
   assert.deepEqual(normalizePlan({}), []);
   assert.deepEqual(normalizePlan({ reminders: 'nada' }), []);

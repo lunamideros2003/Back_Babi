@@ -5,13 +5,6 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 router.use(requireAuth);
 
-/**
- * Resumen rapido de como va el seguimiento.
- *
- * Devuelve en una sola llamada lo que la aplicacion necesita saber de
- * golpe: la semana, cuantas citas hay, cuantos recordatorios, cuantas entradas
- * de diario y cuantas conversaciones.
- */
 router.get('/', async (req, res) => {
   const userId = req.user.id;
 
@@ -23,8 +16,8 @@ router.get('/', async (req, res) => {
     repo.countChatMessages(userId),
   ]);
 
-  const proxima = appointments
-    .filter((cita) => cita.status === 'scheduled')
+  const nextAppointment = appointments
+    .filter((appointment) => appointment.status === 'scheduled')
     .sort((a, b) => String(a.scheduled_at).localeCompare(String(b.scheduled_at)))[0];
 
   res.json({
@@ -37,11 +30,11 @@ router.get('/', async (req, res) => {
       days_left: pregnancy?.days_left ?? null,
       progress_percent: pregnancy?.progress_percent ?? 0,
       appointments_total: appointments.length,
-      next_appointment: proxima
+      next_appointment: nextAppointment
         ? {
-            id: proxima.id,
-            title: proxima.title,
-            scheduled_at: proxima.scheduled_at,
+            id: nextAppointment.id,
+            title: nextAppointment.title,
+            scheduled_at: nextAppointment.scheduled_at,
           }
         : null,
       reminders_pending: reminders.length,

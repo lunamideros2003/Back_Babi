@@ -8,14 +8,6 @@ import {
 } from '../../config/reminders.js';
 import { trimesterName } from '../../utils/pregnancyMath.js';
 
-/**
- * Planificador de recordatorios con el modelo de lenguaje.
- *
- * El modelo solo propone; el backend valida cada campo contra las listas de
- * `config/reminders.js` antes de guardar nada. Si algo no cuadra se descarta
- * el elemento y, si no queda ninguno, se usan las plantillas locales.
- */
-
 const SYSTEM_PROMPT = `Eres la planificadora de recordatorios de BabyTrack IA, una aplicación educativa de seguimiento del embarazo.
 
 Devuelve SOLO un objeto JSON válido, sin explicaciones, sin markdown y sin bloques de código.
@@ -54,9 +46,9 @@ export function buildReminderPrompt({ pregnancy, count, existingTitles = [] }) {
     lines.push('Énfasis: preparación del parto, maleta del hospital y descanso.');
   }
 
-  const repetidos = existingTitles.filter(Boolean).slice(0, 12);
-  if (repetidos.length > 0) {
-    lines.push(`No repitas estos recordatorios que ya tiene activos: ${repetidos.join('; ')}.`);
+  const existingList = existingTitles.filter(Boolean).slice(0, 12);
+  if (existingList.length > 0) {
+    lines.push(`No repitas estos recordatorios que ya tiene activos: ${existingList.join('; ')}.`);
   }
 
   lines.push(`Categorías disponibles: ${REMINDER_KEYS.join(', ')}.`);
@@ -66,12 +58,6 @@ export function buildReminderPrompt({ pregnancy, count, existingTitles = [] }) {
 
 export { SYSTEM_PROMPT };
 
-/**
- * Extrae el primer JSON que aparezca en la respuesta del modelo.
- *
- * Los modelos pequeños a veces envuelven el objeto en un bloque de código o
- * agregan una frase antes; se recorta sin depender de que sean perfectos.
- */
 export function parseJsonObject(text) {
   if (!text) return null;
 
@@ -84,8 +70,6 @@ export function parseJsonObject(text) {
   const arrayStart = cleaned.indexOf('[');
   const arrayEnd = cleaned.lastIndexOf(']');
 
-  // Se prueba primero el delimitador que aparece antes: si el modelo
-  // devuelve una lista, el corchete va delante de las llaves.
   const ranges = [];
   if (objectStart !== -1 && objectEnd > objectStart) ranges.push([objectStart, objectEnd]);
   if (arrayStart !== -1 && arrayEnd > arrayStart) ranges.push([arrayStart, arrayEnd]);
@@ -95,7 +79,6 @@ export function parseJsonObject(text) {
     try {
       return JSON.parse(cleaned.slice(start, end + 1));
     } catch {
-      /* se intenta el siguiente */
     }
   }
 
@@ -112,10 +95,6 @@ function cleanText(value, max) {
     .slice(0, max);
 }
 
-/**
- * Convierte lo que devolvio el modelo en recordatorios seguros.
- * Descarta lo que no cumple y completa los campos opcionales.
- */
 export function normalizePlan(raw, { count = 5 } = {}) {
   const list = Array.isArray(raw)
     ? raw
@@ -144,11 +123,6 @@ export function normalizePlan(raw, { count = 5 } = {}) {
   return items;
 }
 
-/**
- * Pide los recordatorios al modelo. Devuelve `null` cuando no hay modelo
- * disponible o cuando la respuesta no sirve, para que quien llama decida el
- * respaldo.
- */
 export async function planReminders({ pregnancy, count = 5, existingTitles = [] }) {
   if (!pregnancy) return null;
   if (env.ai.provider === 'local' || !isOpenAiConfigured()) return null;
