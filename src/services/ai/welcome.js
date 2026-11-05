@@ -1,10 +1,3 @@
-/**
- * Saludo y sugerencias de la burbuja del asistente.
- *
- * Se generan aqui, sin llamar al modelo, para que la ventana abra al instante
- * y no gaste tokens. Las preguntas cambian con el trimestre.
- */
-
 import { trimesterOf } from '../../utils/pregnancyMath.js';
 
 export const WELCOME_PHRASE = 'Hazme preguntas sobre tu embarazo y resolvámoslas juntas.';

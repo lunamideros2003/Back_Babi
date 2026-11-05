@@ -59,11 +59,6 @@ export function isOpenAiConfigured() {
   return Boolean(env.ai.apiKey);
 }
 
-/**
- * Si el modelo se queda sin tokens a mitad de una frase, se recorta hasta el
- * ultimo punto para no mostrar una respuesta cortada. Si el corte dejaria
- * demasiado poco texto, se deja tal cual.
- */
 export function trimToLastSentence(text) {
   const cleaned = String(text ?? '').trim();
   const match = cleaned.match(/^[\s\S]*[.!?](?=\s|$)/);
@@ -85,7 +80,6 @@ export async function openAiAnswer({ message, weekData, history = [], userName, 
     temperature: env.ai.temperature,
   });
 
-
   const choice = completion.choices?.[0];
   const raw = choice?.message?.content?.trim();
 
@@ -101,11 +95,6 @@ export async function openAiAnswer({ message, weekData, history = [], userName, 
   };
 }
 
-/**
- * Peticion de una sola respuesta para tareas que no son conversacionales
- * (por ejemplo, planificar recordatorios). Devuelve el texto tal cual: quien
- * la usa se encarga de interpretarlo y de validarlo.
- */
 export async function openAiJson({ system, user, maxTokens = 500, temperature = 0.5 }) {
   const sdk = getClient();
   if (!sdk) throw new Error('OPENAI_API_KEY no configurada');
