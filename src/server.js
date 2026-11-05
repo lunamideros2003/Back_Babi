@@ -12,20 +12,20 @@ const server = app.listen(env.port);
 server.on('listening', () => {
   const aiMode = isOpenAiConfigured()
     ? `OpenAI (${env.ai.model})`
-    : 'proveedor local (sin API key)';
+    : 'local provider (no API key)';
 
   console.log('');
   console.log('  BabyTrack IA - API');
-  console.log(`  Entorno:   ${env.nodeEnv}`);
-  console.log(`  Base:      ${env.databaseUrl ? 'Supabase / Postgres' : env.databaseFile}`);
-  console.log(`  Health:    http://localhost:${env.port}/api/health`);
-  console.log(`  IA:        ${aiMode}`);
-  console.log(`  CORS:      ${env.corsOrigin.join(', ')}`);
+  console.log(`  Environment: ${env.nodeEnv}`);
+  console.log(`  Database:    ${env.databaseUrl ? 'Supabase / Postgres' : env.databaseFile}`);
+  console.log(`  Health:      http://localhost:${env.port}/api/health`);
+  console.log(`  AI:          ${aiMode}`);
+  console.log(`  CORS:        ${env.corsOrigin.join(', ')}`);
   console.log(
-    `  Estado DB: ${bootState.database.ready ? `lista (${bootState.database.weeks} semanas)` : 'NO disponible'}`,
+    `  DB status:   ${bootState.database.ready ? `ready (${bootState.database.weeks} weeks)` : 'NOT available'}`,
   );
   if (!bootState.database.ready) {
-    console.log(`  Error DB:  ${bootState.database.error}`);
+    console.log(`  DB error:    ${bootState.database.error}`);
   }
   console.log('');
 });
@@ -35,38 +35,38 @@ server.on('error', (error) => {
     const owners = findPortOwners(env.port);
 
     console.error('');
-    console.error(`  El puerto ${env.port} ya esta en uso.`);
+    console.error(`  Port ${env.port} is already in use.`);
 
     if (owners.length > 0) {
       console.error('');
       for (const owner of owners) {
         const tag = owner.commandLine.includes('Back_Babi')
-          ? ' (otra copia de BabyTrack)'
-          : ' (otro proyecto)';
+          ? ' (another BabyTrack copy)'
+          : ' (another project)';
         console.error(`    PID ${owner.pid} - ${owner.project}${tag}`);
       }
     }
 
     console.error('');
-    console.error('  Libera el puerto:');
+    console.error('  Free the port:');
     for (const owner of owners) {
       console.error(`    taskkill /PID ${owner.pid} /F`);
     }
     console.error('');
-    console.error('  O cambia el puerto en Back_Babi/.env:');
+    console.error('  Or change the port in Back_Babi/.env:');
     console.error('    PORT=4002');
-    console.error('  y actualiza Fron_Babi/.env:');
+    console.error('  and update Fron_Babi/.env:');
     console.error('    VITE_PROXY_TARGET=http://localhost:4002');
     console.error('');
   } else {
-    console.error('  Error al iniciar el servidor:', error.message);
+    console.error('  Failed to start the server:', error.message);
   }
 
   closeDatabase().finally(() => process.exit(1));
 });
 
 function shutdown(signal) {
-  console.log(`\n${signal} recibido, cerrando servidor...`);
+  console.log(`\n${signal} received, shutting down server...`);
   server.close(() => {
     closeDatabase().finally(() => process.exit(0));
   });
