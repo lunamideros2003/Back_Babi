@@ -42,24 +42,24 @@ const run = async () => {
   console.log('\nBabyTrack IA - question bot test\n');
 
   const health = await call('/health');
-  check('health responde 200', health.status === 200);
+  check('health returns 200', health.status === 200);
 
   const email = `bot${Date.now()}@babytrack.dev`;
   const register = await call('/auth/register', {
     method: 'POST',
     body: { name: 'Bot', email, password: 'secreta123', currentWeek: 20 },
   });
-  check('registro 201', register.status === 201, JSON.stringify(register.json).slice(0, 120));
+  check('registration 201', register.status === 201, JSON.stringify(register.json).slice(0, 120));
   const token = register.json.token;
 
   const questions = await call('/bot/questions', { token });
-  check('banco de preguntas', questions.json.questions?.length === 10, `${questions.json.questions?.length}`);
-  check('tipos variados', new Set(questions.json.questions?.map((q) => q.type)).size >= 4);
+  check('question bank', questions.json.questions?.length === 10, `${questions.json.questions?.length}`);
+  check('varied types', new Set(questions.json.questions?.map((q) => q.type)).size >= 4);
 
   const start = await call('/bot/sessions', { method: 'POST', token });
-  check('sesion creada', start.status === 201, JSON.stringify(start.json).slice(0, 150));
-  check('primera pregunta', start.json.question?.id === 'q_week', start.json.question?.id);
-  check('progreso inicial', start.json.question?.progress > 0);
+  check('session created', start.status === 201, JSON.stringify(start.json).slice(0, 150));
+  check('first question', start.json.question?.id === 'q_week', start.json.question?.id);
+  check('initial progress', start.json.question?.progress > 0);
 
   const sessionId = start.json.session.id;
   let last = start.json;
@@ -82,52 +82,52 @@ const run = async () => {
       break;
     }
 
-    check(`${label} devuelve feedback`, Boolean(response.json.feedback?.length > 10), response.json.feedback);
-    check(`${label} sin diagnostico`, !/diagnostic|recet|medicament/i.test(response.json.feedback ?? ''));
+    check(`${label} returns feedback`, Boolean(response.json.feedback?.length > 10), response.json.feedback);
+    check(`${label} without diagnosis`, !/diagnostic|recet|medicament/i.test(response.json.feedback ?? ''));
 
     if (isLast) {
-      check('ultima respuesta completa la sesion', response.json.is_complete === true);
-      check('resumen generado', Boolean(response.json.summary?.length > 40));
-      check('puntaje numerico', Number.isFinite(response.json.score), String(response.json.score));
-      check('sin preguntas pendientes', response.json.question === null);
+      check('last answer completes the session', response.json.is_complete === true);
+      check('summary generated', Boolean(response.json.summary?.length > 40));
+      check('numeric score', Number.isFinite(response.json.score), String(response.json.score));
+      check('no pending questions', response.json.question === null);
     } else {
-      check(`${label} avanza a ${expectId}`, response.json.question?.id === expectId, response.json.question?.id);
+      check(`${label} advances to ${expectId}`, response.json.question?.id === expectId, response.json.question?.id);
     }
 
     last = response.json;
   }
 
-  check('resumen con puntaje bajo', /por mejorar|Buen autocuidado/.test(last.summary ?? ''), last.summary?.slice(0, 60));
-  check('menciona sintomas', /sintoma/i.test(last.summary ?? ''));
+  check('summary with low score', /por mejorar|Buen autocuidado/.test(last.summary ?? ''), last.summary?.slice(0, 60));
+  check('mentions symptoms', /sintoma/i.test(last.summary ?? ''));
 
   const fetchSession = await call(`/bot/sessions/${sessionId}`, { token });
-  check('sesion recuperable', fetchSession.status === 200 && fetchSession.json.session.status === 'completed');
-  check('respuestas guardadas', fetchSession.json.answers?.length === 10, `${fetchSession.json.answers?.length}`);
+  check('session recoverable', fetchSession.status === 200 && fetchSession.json.session.status === 'completed');
+  check('saved answers', fetchSession.json.answers?.length === 10, `${fetchSession.json.answers?.length}`);
 
   const sessions = await call('/bot/sessions', { token });
-  check('historial de sesiones', sessions.json.sessions?.length >= 1);
+  check('session history', sessions.json.sessions?.length >= 1);
 
   const bad = await call(`/bot/sessions/${sessionId}/answers`, {
     method: 'POST',
     token,
     body: { questionId: 'q_week', value: 'inventado' },
   });
-  check('rechaza opcion invalida', bad.status === 422, String(bad.status));
+  check('rejects invalid option', bad.status === 422, String(bad.status));
 
   const badId = await call(`/bot/sessions/${sessionId}/answers`, {
     method: 'POST',
     token,
     body: { questionId: 'no_existe', value: 'x' },
   });
-  check('rechaza pregunta inexistente', badId.status === 422, String(badId.status));
+  check('rejects missing question', badId.status === 422, String(badId.status));
 
   const noAuth = await call('/bot/sessions');
-  check('sin token da 401', noAuth.status === 401);
+  check('without token returns 401', noAuth.status === 401);
 
   const reset = await call('/bot/reset', { method: 'POST', token });
-  check('reset funciona', reset.status === 200);
+  check('reset works', reset.status === 200);
   const afterReset = await call('/bot/sessions', { token });
-  check('sesiones borradas', afterReset.json.sessions?.length === 0, `${afterReset.json.sessions?.length}`);
+  check('sessions deleted', afterReset.json.sessions?.length === 0, `${afterReset.json.sessions?.length}`);
 
   console.log(`\nResult: ${passed} passed, ${failed} failed\n`);
   process.exit(failed === 0 ? 0 : 1);
