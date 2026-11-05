@@ -4,67 +4,67 @@ import assert from 'node:assert/strict';
 import { normalizeDatabaseUrl } from '../src/config/env.js';
 import { withRetry } from '../src/db/connection.js';
 
-test('normaliza la url de conexion quitando sslmode', () => {
+test('normalizes the connection url by removing sslmode', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://u:p@h:5432/postgres?sslmode=require'),
     'postgresql://u:p@h:5432/postgres',
   );
 });
 
-test('conserva otros parametros de la url', () => {
+test('keeps other url parameters', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://u:p@h:5432/postgres?sslmode=require&application_name=babytrack'),
     'postgresql://u:p@h:5432/postgres?application_name=babytrack',
   );
 });
 
-test('deja intacta una url sin parametros', () => {
+test('leaves a url without parameters untouched', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://u:p@h:5432/postgres'),
     'postgresql://u:p@h:5432/postgres',
   );
 });
 
-test('recorta los espacios que deja copiar una url', () => {
+test('trims spaces left when copying a url', () => {
   assert.equal(
     normalizeDatabaseUrl('  postgresql://u:p@h:5432/postgres  '),
     'postgresql://u:p@h:5432/postgres',
   );
 });
 
-test('una url vacia se queda vacia', () => {
+test('an empty url stays empty', () => {
   assert.equal(normalizeDatabaseUrl(''), '');
   assert.equal(normalizeDatabaseUrl(undefined), '');
 });
 
-test('codifica un # sin escapar en la contrasena', () => {
+test('encodes an unescaped # in the password', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://postgres.x:pa#ss@host:5432/postgres'),
     'postgresql://postgres.x:pa%23ss@host:5432/postgres',
   );
 });
 
-test('codifica un ? sin escapar en la contrasena', () => {
+test('encodes an unescaped ? in the password', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://postgres.x:pa?ss@host:5432/postgres'),
     'postgresql://postgres.x:pa%3Fss@host:5432/postgres',
   );
 });
 
-test('un ? en la contrasena no se confunde con la query', () => {
+test('a ? in the password is not confused with the query', () => {
   const result = normalizeDatabaseUrl('postgresql://postgres.x:pa?ss@host:5432/postgres?sslmode=require');
 
   assert.equal(result, 'postgresql://postgres.x:pa%3Fss@host:5432/postgres');
 });
 
-test('no codifica dos veces una contrasena ya codificada', () => {
+test('does not double encode an already encoded password', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://postgres.x:p%40ss%2Fword@host:5432/postgres'),
     'postgresql://postgres.x:p%40ss%2Fword@host:5432/postgres',
   );
 });
 
-test('quita las comillas que vienen al copiar', () => {
+test('removes quotes that come when copying', () => {
   assert.equal(
     normalizeDatabaseUrl('"postgresql://postgres.x:p%40ss@host:5432/postgres"'),
     'postgresql://postgres.x:p%40ss@host:5432/postgres',
@@ -75,21 +75,21 @@ test('quita las comillas que vienen al copiar', () => {
   );
 });
 
-test('un @ dentro de la contrasena no rompe el reparto', () => {
+test('an @ inside the password does not break the split', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://postgres.x:p@ss@host:5432/postgres'),
     'postgresql://postgres.x:p%40ss@host:5432/postgres',
   );
 });
 
-test('deja intacta una url sin credenciales', () => {
+test('leaves a url without credentials untouched', () => {
   assert.equal(
     normalizeDatabaseUrl('postgresql://host:5432/postgres'),
     'postgresql://host:5432/postgres',
   );
 });
 
-test('la url reparada se puede volver a leer como URL', () => {
+test('the repaired url can be read as a URL again', () => {
   const url = normalizeDatabaseUrl('postgresql://postgres.x:pa#ss@host:5432/postgres?sslmode=require');
   const parsed = new URL(url, 'postgres://base');
 
@@ -98,7 +98,7 @@ test('la url reparada se puede volver a leer como URL', () => {
   assert.equal(decodeURIComponent(parsed.password), 'pa#ss');
 });
 
-test('withRetry reintenta hasta que la operacion funciona', async () => {
+test('withRetry retries until the operation works', async () => {
   let attempts = 0;
 
   const result = await withRetry(
@@ -114,7 +114,7 @@ test('withRetry reintenta hasta que la operacion funciona', async () => {
   assert.equal(attempts, 3);
 });
 
-test('withRetry lanza el ultimo error si nunca funciona', async () => {
+test('withRetry throws the last error if it never works', async () => {
   let attempts = 0;
 
   await assert.rejects(
@@ -132,7 +132,7 @@ test('withRetry lanza el ultimo error si nunca funciona', async () => {
   assert.equal(attempts, 2);
 });
 
-test('withRetry no reintenta cuando la operacion ya funciona', async () => {
+test('withRetry does not retry when the operation already works', async () => {
   let attempts = 0;
 
   await withRetry(

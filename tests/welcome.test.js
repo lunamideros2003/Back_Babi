@@ -9,28 +9,28 @@ import {
   WELCOME_PHRASE,
 } from '../src/services/ai/welcome.js';
 
-test('el saludo usa el primer nombre', () => {
+test('the greeting uses the first name', () => {
   const greeting = buildGreeting('Luna Mideros');
 
   assert.match(greeting, /^Hola, Luna\./);
   assert.ok(greeting.includes(WELCOME_PHRASE));
 });
 
-test('el saludo funciona sin nombre', () => {
+test('the greeting works without a name', () => {
   const greeting = buildGreeting('');
 
   assert.match(greeting, /^Hola\./);
   assert.ok(greeting.includes(WELCOME_PHRASE));
 });
 
-test('elige la etapa segun la semana', () => {
+test('picks the stage based on the week', () => {
   assert.equal(stageFor(8), 'early');
   assert.equal(stageFor(14), 'middle');
   assert.equal(stageFor(30), 'late');
   assert.equal(stageFor(null), 'general');
 });
 
-test('cada etapa trae cuatro sugerencias distintas', () => {
+test('each stage brings four different suggestions', () => {
   for (const week of [6, 20, 34, null]) {
     const suggestions = pickSuggestions(week);
 
@@ -39,13 +39,13 @@ test('cada etapa trae cuatro sugerencias distintas', () => {
   }
 });
 
-test('las sugerencias del tercer trimestre hablan del parto', () => {
+test('third-trimester suggestions talk about birth', () => {
   const suggestions = pickSuggestions(36).join(' ').toLowerCase();
 
   assert.match(suggestions, /parto|contracciones|hospital/);
 });
 
-test('buildWelcome reune saludo, etapa y semana', () => {
+test('buildWelcome joins greeting, stage and week', () => {
   const welcome = buildWelcome({ name: 'Ana', week: 20 });
 
   assert.equal(welcome.stage, 'middle');
@@ -54,7 +54,7 @@ test('buildWelcome reune saludo, etapa y semana', () => {
   assert.match(welcome.greeting, /Ana/);
 });
 
-test('sin embarazo registrado usa las sugerencias generales', () => {
+test('without a registered pregnancy it uses general suggestions', () => {
   const welcome = buildWelcome({ name: 'Ana' });
 
   assert.equal(welcome.stage, 'general');

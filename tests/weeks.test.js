@@ -15,7 +15,7 @@ function centimeters(text) {
   return match ? Number(match[1].replace(',', '.')) : null;
 }
 
-test('estan las 37 semanas, de la 4 a la 40', () => {
+test('all 37 weeks are present, from 4 to 40', () => {
   assert.equal(weeks.length, 37);
 
   for (let week = 4; week <= 40; week += 1) {
@@ -23,7 +23,7 @@ test('estan las 37 semanas, de la 4 a la 40', () => {
   }
 });
 
-test('cada semana trae una comparacion de tamano con articulo', () => {
+test('each week brings a size comparison with an article', () => {
   for (const item of weeks) {
     assert.ok(item.size_comparison, `semana ${item.week_number} sin tamano`);
     assert.match(
@@ -34,11 +34,11 @@ test('cada semana trae una comparacion de tamano con articulo', () => {
   }
 });
 
-test('la semana 37 es una sandia pequena', () => {
+test('week 37 is a small watermelon', () => {
   assert.equal(byWeek.get(37).size_comparison, 'una sandía pequeña');
 });
 
-test('las frutas crecen con las semanas y no se repiten seguidas', () => {
+test('fruits grow with the weeks and do not repeat back to back', () => {
   const orden = weeks.map((item) => item.week_number);
   assert.deepEqual(orden, [...orden].sort((a, b) => a - b));
 
@@ -51,22 +51,22 @@ test('las frutas crecen con las semanas y no se repiten seguidas', () => {
   }
 });
 
-test('el peso crece desde la semana 20', () => {
+test('weight grows from week 20', () => {
   let anterior = 0;
 
   for (const item of weeks) {
-    const peso = grams(item.typical_weight);
-    if (peso === null) continue;
+    const weight = grams(item.typical_weight);
+    if (weight === null) continue;
     if (item.week_number < 20) continue;
 
-    assert.ok(peso > anterior, `semana ${item.week_number}: ${peso} g no supera ${anterior} g`);
-    anterior = peso;
+    assert.ok(weight > anterior, `semana ${item.week_number}: ${weight} g no supera ${anterior} g`);
+    anterior = weight;
   }
 
   assert.ok(anterior >= 3000, 'la semana 40 deberia rondar los 3 kg');
 });
 
-test('la longitud crece desde la semana 8', () => {
+test('length grows from week 8', () => {
   let anterior = 0;
 
   for (const item of weeks) {

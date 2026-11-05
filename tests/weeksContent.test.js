@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 
 import { weeks } from '../src/db/data/weeks.js';
 
-// Palabras que ya se corrigieron una vez. Si vuelven a aparecer sin tilde en
-// el texto que lee la usuaria, esta prueba falla.
 const SIN_TILDE = [
   'corazon',
   'embrion',
@@ -21,7 +19,7 @@ const SIN_TILDE = [
   'organogenesis',
 ];
 
-test('cada semana trae los textos que se muestran', () => {
+test('each week brings the texts that are shown', () => {
   for (const item of weeks) {
     assert.ok(item.title, `semana ${item.week_number} sin titulo`);
     assert.ok(item.summary, `semana ${item.week_number} sin resumen`);
@@ -31,9 +29,9 @@ test('cada semana trae los textos que se muestran', () => {
   }
 });
 
-test('no quedan palabras conocidas sin tilde', () => {
+test('no known words are left without accents', () => {
   for (const item of weeks) {
-    const texto = [
+    const text = [
       item.title,
       item.summary,
       item.baby_development,
@@ -48,7 +46,7 @@ test('no quedan palabras conocidas sin tilde', () => {
 
     for (const palabra of SIN_TILDE) {
       assert.doesNotMatch(
-        texto,
+        text,
         new RegExp(`\\b${palabra}\\b`),
         `semana ${item.week_number} conserva "${palabra}"`,
       );
