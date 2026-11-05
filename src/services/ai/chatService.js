@@ -31,10 +31,6 @@ async function loadHistory(userId, limit = 6) {
   return rows.reverse();
 }
 
-/**
- * Single entry point for every AI interaction.
- * Order matters: safety first, then classification, then the model.
- */
 export async function getAssistantReply({
   user,
   pregnancy,

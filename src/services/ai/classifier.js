@@ -111,18 +111,6 @@ function tokenize(text) {
     .filter((token) => token.length >= 2 && !STOP_WORDS.has(token) && !SHORT_STOP_WORDS.has(token));
 }
 
-/**
- * Deterministic keyword classifier.
- * The LLM receives this as a hint, but the answer never depends on it,
- * so the feature keeps working without any API key.
- *
- * Scoring:
- *  - multi word phrase match  -> 3 points
- *  - exact token match       -> 2 points
- *  - stem match (prefix >=4) -> 1 point
- *  - category weight breaks ties between equally scored categories
- *  - earliest mention in the sentence breaks the remaining ties
- */
 export function classifyQuestion(message) {
   const tokens = [...tokenize(message)];
   const tokenSet = new Set(tokens);
