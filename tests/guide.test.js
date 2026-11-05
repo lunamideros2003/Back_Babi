@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildGuide } from '../src/services/guideService.js';
 import { knowledgeBase } from '../src/services/ai/knowledgeBase.js';
 
-test('la guia tiene las cuatro categorias previstas', () => {
+test('the guide has the four planned categories', () => {
   const guide = buildGuide();
 
   assert.equal(guide.categories.length, 4);
@@ -13,7 +13,7 @@ test('la guia tiene las cuatro categorias previstas', () => {
   );
 });
 
-test('cada categoria trae titulo, descripcion y articulos', () => {
+test('each category brings a title, description and articles', () => {
   for (const category of buildGuide().categories) {
     assert.ok(category.label.length > 0);
     assert.ok(category.description.length > 0);
@@ -21,7 +21,7 @@ test('cada categoria trae titulo, descripcion y articulos', () => {
   }
 });
 
-test('ningun articulo de la base se pierde al agrupar', () => {
+test('no article from the base is lost when grouping', () => {
   const guide = buildGuide();
   const total = guide.categories.reduce((sum, c) => sum + c.items.length, 0);
 
@@ -29,7 +29,7 @@ test('ningun articulo de la base se pierde al agrupar', () => {
   assert.equal(guide.total, knowledgeBase.length);
 });
 
-test('los articulos tienen id, titulo, contenido y etiquetas', () => {
+test('articles have id, title, content and tags', () => {
   for (const category of buildGuide().categories) {
     for (const item of category.items) {
       assert.ok(item.id.length > 0);
@@ -40,7 +40,7 @@ test('los articulos tienen id, titulo, contenido y etiquetas', () => {
   }
 });
 
-test('los titulos no se quedan en minusculas', () => {
+test('titles do not stay lowercase', () => {
   for (const category of buildGuide().categories) {
     for (const item of category.items) {
       assert.match(item.title, /[A-Z]/, `el titulo "${item.title}" debe empezar en mayuscula`);
@@ -48,7 +48,7 @@ test('los titulos no se quedan en minusculas', () => {
   }
 });
 
-test('los ids de los articulos no se repiten', () => {
+test('article ids do not repeat', () => {
   const ids = buildGuide().categories.flatMap((c) => c.items.map((i) => i.id));
 
   assert.equal(new Set(ids).size, ids.length);

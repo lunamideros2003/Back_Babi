@@ -9,7 +9,7 @@ import {
   getWeekData,
 } from '../src/services/bot/botService.js';
 
-test('el banco tiene 10 preguntas con ids unicos y orden creciente', () => {
+test('the bank has 10 questions with unique ids and increasing order', () => {
   assert.equal(TOTAL_QUESTIONS, 10);
   assert.equal(new Set(questions.map((q) => q.id)).size, 10);
 
@@ -20,7 +20,7 @@ test('el banco tiene 10 preguntas con ids unicos y orden creciente', () => {
   });
 });
 
-test('getQuestionByIndex recorre el banco completo', () => {
+test('getQuestionByIndex walks the whole bank', () => {
   for (let index = 0; index < TOTAL_QUESTIONS; index += 1) {
     const question = getQuestionByIndex(index);
     assert.ok(question, `sin pregunta en el indice ${index}`);
@@ -30,7 +30,7 @@ test('getQuestionByIndex recorre el banco completo', () => {
   assert.equal(getQuestionById('no_existe'), null);
 });
 
-test('las preguntas de opcion traen lista valida', () => {
+test('choice questions bring a valid list', () => {
   for (const question of questions) {
     if (question.type === 'single' || question.type === 'multi') {
       assert.ok(Array.isArray(question.options), `${question.id} sin opciones`);
@@ -43,14 +43,14 @@ test('las preguntas de opcion traen lista valida', () => {
   }
 });
 
-test('la escala de energia va de 1 a 5', () => {
+test('the energy scale goes from 1 to 5', () => {
   const energy = getQuestionById('q_energy');
   assert.equal(energy.min, 1);
   assert.equal(energy.max, 5);
   assert.equal(energy.type, 'scale');
 });
 
-test('el feedback local responde segun el valor de la escala', () => {
+test('local feedback responds based on the scale value', () => {
   const energy = getQuestionById('q_energy');
   const low = localFeedbackFor(energy, 1);
   const mid = localFeedbackFor(energy, 3);
@@ -61,7 +61,7 @@ test('el feedback local responde segun el valor de la escala', () => {
   assert.notEqual(mid, high);
 });
 
-test('el feedback local junta varios sintomas', () => {
+test('local feedback combines several symptoms', () => {
   const question = getQuestionById('q_symptoms');
   const single = localFeedbackFor(question, ['nauseas']);
   const multiple = localFeedbackFor(question, ['nauseas', 'insomnio']);
@@ -71,7 +71,7 @@ test('el feedback local junta varios sintomas', () => {
   assert.match(localFeedbackFor(question, ['ninguno']), /bien/i);
 });
 
-test('el feedback nunca receta ni diagnostica', () => {
+test('feedback never prescribes or diagnoses', () => {
   const banned = /diagnostic|recet|medicament|dosis|pastilla/;
 
   for (const question of questions) {
@@ -91,14 +91,14 @@ test('el feedback nunca receta ni diagnostica', () => {
   }
 });
 
-test('el trimestre se traduce a una semana de referencia', () => {
+test('the trimester maps to a reference week', () => {
   assert.equal(weekForTrimester('1-13'), 8);
   assert.equal(weekForTrimester('14-27'), 20);
   assert.equal(weekForTrimester('28-40'), 34);
   assert.equal(weekForTrimester('otro'), null);
 });
 
-test('el puntaje sube con mejores habitos y nunca pasa de 12', () => {
+test('the score rises with better habits and never exceeds 12', () => {
   const bad = [
     { question_id: 'q_vitamins', answer_value: 'no' },
     { question_id: 'q_food', answer_value: '1-2' },
@@ -122,7 +122,7 @@ test('el puntaje sube con mejores habitos y nunca pasa de 12', () => {
   assert.ok(scoreFromAnswers([]) === 0);
 });
 
-test('el resumen separa lo que hace bien y lo que falta', () => {
+test('the summary separates what is done well from what is missing', () => {
   const answers = [
     { question_id: 'q_vitamins', answer_value: 'yes' },
     { question_id: 'q_checkup', answer_value: 'no' },
@@ -138,7 +138,7 @@ test('el resumen separa lo que hace bien y lo que falta', () => {
   assert.doesNotMatch(summary, /diagnostic|recet/i);
 });
 
-test('el resumen funciona sin informacion de semana', () => {
+test('the summary works without week information', () => {
   const summary = buildSummaryText([{ question_id: 'q_food', answer_value: '3' }], 1, null);
   assert.ok(summary.length > 20);
   assert.doesNotMatch(summary, /semana \d+/i);

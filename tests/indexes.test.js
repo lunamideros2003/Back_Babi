@@ -3,13 +3,6 @@ import assert from 'node:assert/strict';
 
 import { all, closeDatabase, DRIVER } from '../src/db/connection.js';
 
-/*
-  Comprueba que cada tabla tiene el indice que necesita.
-
-  El indice del diario faltaba en el esquema de Postgres y solo se noto al
-  mirar la base de datos de verdad. Estas pruebas evitan que vuelva a pasar.
-*/
-
 const INDICES_ESPERADOS = [
   ['appointments', 'idx_appt_user_date'],
   ['reminders', 'idx_reminders_user_due'],
@@ -22,7 +15,7 @@ const INDICES_ESPERADOS = [
   ['journal_entries', 'idx_journal_user_date'],
 ];
 
-test('todas las tablas tienen sus indices', async (t) => {
+test('all tables have their indexes', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
@@ -44,7 +37,7 @@ test('todas las tablas tienen sus indices', async (t) => {
   );
 });
 
-test('el indice del diario cubre la consulta del diario', async (t) => {
+test('the journal index covers the journal query', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
