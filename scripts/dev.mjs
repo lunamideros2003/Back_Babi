@@ -1,5 +1,3 @@
-// Watcher de desarrollo. Ignora node_modules y la base de datos para evitar
-// reinicios en bucle provocados por cambios internos de dependencias.
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -32,8 +30,8 @@ function start() {
     }
 
     if (code !== 0 && code !== null) {
-      console.error(`\nEl servidor se detuvo con codigo ${code}.`);
-      console.error('No se reiniciara automaticamente. Revisa el mensaje de arriba.\n');
+      console.error(`\nThe server stopped with code ${code}.`);
+      console.error('It will not restart automatically. Check the message above.\n');
     }
   });
 }
@@ -51,9 +49,6 @@ function restart() {
 
   restarting = true;
 
-  // Keep a reference to the process being replaced. The global `child` will
-  // point to the replacement once it starts, so the force kill below must not
-  // read from it or it would terminate the new process.
   const previous = child;
 
   previous.once('exit', () => {
@@ -91,5 +86,5 @@ for (const dir of WATCH_DIRS) {
   });
 }
 
-console.log('Vigilando cambios en src/ ... (Ctrl+C para detener)');
+console.log('Watching for changes in src/ ... (Ctrl+C to stop)');
 start();

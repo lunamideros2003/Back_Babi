@@ -1,5 +1,3 @@
-// Dev utility: scan the repo for corrupted copy (CJK glyphs, glued words, stray symbols).
-// Run with: node scripts/check-copy.mjs
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -39,7 +37,6 @@ for (const file of files) {
     if (content.includes(word)) found.add(`suspect ${word.trim()}`);
   }
 
-  // A pipe glued to a word inside a string literal is a corruption artifact.
   const literals = [...content.matchAll(/'([^'\n]*)'|"([^"\n]*)"/g)];
   for (const match of literals) {
     const literal = match[1] ?? match[2] ?? '';
