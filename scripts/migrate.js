@@ -17,54 +17,53 @@ const TABLES = [
 
 async function truncateAll() {
   await exec(`TRUNCATE TABLE ${TABLES.join(', ')} RESTART IDENTITY CASCADE;`);
-  console.log('Tablas vaciadas.');
+  console.log('Tables truncated.');
 }
 
 async function report() {
   const status = await ping();
   console.log(`Driver: ${status.driver}`);
-  console.log('Conexion: OK');
+  console.log('Connection: OK');
 
   const tables = await all(
     `SELECT table_name FROM information_schema.tables
      WHERE table_schema = 'public' ORDER BY table_name`,
   );
 
-  console.log(`Tablas en public: ${tables.length}`);
+  console.log(`Tables in public: ${tables.length}`);
   for (const table of tables) console.log(`  - ${table.table_name}`);
 
   const users = await get('SELECT COUNT(*) AS total FROM users');
   const weeks = await get('SELECT COUNT(*) AS total FROM weeks');
-  console.log(`Semanas: ${weeks.total}`);
-  console.log(`Usuarios: ${users.total}`);
+  console.log(`Weeks: ${weeks.total}`);
+  console.log(`Users: ${users.total}`);
 
   await reportSecurity();
 }
 
-/** Informa del estado del RLS, que es lo que impide el acceso directo. */
 async function reportSecurity() {
   const rows = await all(`
-    SELECT c.relname AS tabla, c.relrowsecurity AS rls,
+    SELECT c.relname AS table_name, c.relrowsecurity AS rls,
            (SELECT count(*)::int FROM pg_policies p
-             WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS politicas
+             WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS policies
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE n.nspname = 'public' AND c.relkind = 'r'
     ORDER BY c.relname
   `);
 
-  const sinRls = rows.filter((row) => row.rls !== true);
+  const withoutRls = rows.filter((row) => row.rls !== true);
 
   console.log('');
-  console.log('Seguridad (RLS):');
+  console.log('Security (RLS):');
   for (const row of rows) {
-    console.log(`  ${row.rls === true ? 'OK  ' : 'FALTA'} ${row.tabla.padEnd(18)} politicas=${row.politicas}`);
+    console.log(`  ${row.rls === true ? 'OK  ' : 'MISSING'} ${row.table_name.padEnd(18)} policies=${row.policies}`);
   }
   console.log('');
   console.log(
-    sinRls.length === 0
-      ? 'Todas las tablas estan protegidas.'
-      : `Faltan por proteger: ${sinRls.map((row) => row.tabla).join(', ')}. Usa: npm run db:security`,
+    withoutRls.length === 0
+      ? 'All tables are protected.'
+      : `Still unprotected: ${withoutRls.map((row) => row.table_name).join(', ')}. Run: npm run db:security`,
   );
 }
 
@@ -77,16 +76,16 @@ async function main() {
   const args = process.argv.slice(2);
 
   if (DRIVER !== 'postgres') {
-    console.error('Este comando necesita DATABASE_URL apuntando a Supabase o Postgres.');
+    console.error('This command needs DATABASE_URL pointing to Supabase or Postgres.');
     console.error('');
-    console.error('Agrega esto a Back_Babi/.env:');
-    console.error('  DATABASE_URL=postgresql://usuario:clave@host:5432/postgres');
+    console.error('Add this to Back_Babi/.env:');
+    console.error('  DATABASE_URL=postgresql://user:password@host:5432/postgres');
     console.error('');
-    console.error('La cadena completa la copias en Supabase > Project Settings > Database.');
+    console.error('Copy the full string from Supabase > Project Settings > Database.');
     process.exit(1);
   }
 
-  console.log(`Objetivo: ${env.databaseUrl.replace(/:[^:@/]+@/, ':****@')}`);
+  console.log(`Target: ${env.databaseUrl.replace(/:[^:@/]+@/, ':****@')}`);
   console.log('');
 
   if (args.includes('--truncate')) {
@@ -103,20 +102,20 @@ async function main() {
     await truncateAll();
   }
 
-  console.log('1/3 Creando tablas...');
+  console.log('1/3 Creating tables...');
   await createTables();
-  console.log('    Listo.');
+  console.log('    Done.');
 
-  console.log('2/3 Cargando las semanas...');
+  console.log('2/3 Loading weeks...');
   const seeded = await seedWeeks();
-  console.log(`    ${seeded.total} semanas en la base.`);
+  console.log(`    ${seeded.total} weeks in the database.`);
 
-  console.log('3/3 Verificando...');
+  console.log('3/3 Verifying...');
   const info = await ensureDatabase();
-  console.log(`    Driver ${info.driver}, ${info.weeks} semanas disponibles.`);
+  console.log(`    Driver ${info.driver}, ${info.weeks} weeks available.`);
 
   console.log('');
-  console.log('Migracion completada. Tu proyecto ya usa Supabase.');
+  console.log('Migration complete. Your project now uses Supabase.');
 }
 
 try {
@@ -124,12 +123,12 @@ try {
   await closeDatabase();
 } catch (error) {
   console.error('');
-  console.error('La migracion fallo:', error.message);
+  console.error('Migration failed:', error.message);
   console.error('');
-  console.error('Revisa estos puntos:');
-  console.error('  - La cadena de conexion es correcta y no expira');
-  console.error('  - El proyecto de Supabase esta activo');
-  console.error('  - Tu red permite salir al puerto 5432');
+  console.error('Check these points:');
+  console.error('  - The connection string is correct and has not expired');
+  console.error('  - The Supabase project is active');
+  console.error('  - Your network allows outbound traffic on port 5432');
   console.error('');
   await closeDatabase();
   process.exit(1);
