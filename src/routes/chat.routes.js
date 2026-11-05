@@ -9,19 +9,17 @@ import { buildWelcome } from '../services/ai/welcome.js';
 import { isOpenAiConfigured } from '../services/ai/openaiProvider.js';
 import { DISCLAIMER } from '../config/disclaimers.js';
 import { ValidationError, AppError } from '../utils/errors.js';
-import { consume, reintentarEn } from '../utils/rateLimit.js';
+import { consume, retryAfter } from '../utils/rateLimit.js';
 
 const router = Router();
 router.use(requireAuth);
 
-// La IA gratuita tiene un tope por minuto: se limita por usuaria.
-const LIMITE_POR_MINUTO = 20;
+const RATE_LIMIT_PER_MINUTE = 20;
 
-// El chat de la pagina admite preguntas largas; la burbuja, respuestas cortas.
-const MENSAJE_MAXIMO = 1000;
-const MENSAJE_MAXIMO_RAPIDO = 500;
+const MAX_MESSAGE_LENGTH = 1000;
+const MAX_QUICK_MESSAGE_LENGTH = 500;
 
-function readMessage(body, maxLength = MENSAJE_MAXIMO) {
+function readMessage(body, maxLength = MAX_MESSAGE_LENGTH) {
   const message = String(body?.message ?? '').trim();
 
   if (message.length < 2) {
@@ -37,19 +35,15 @@ function readMessage(body, maxLength = MENSAJE_MAXIMO) {
   return message;
 }
 
-/**
- * El chat de la pagina y la burbuja comparten el mismo limite: preguntar en
- * un sitio tambien cuenta en el otro, asi no se duplica el consumo gratuito.
- */
 function enforceRateLimit(req, res, scope = 'chat') {
   const key = `${scope}:${req.user.id}`;
 
-  if (consume(key, LIMITE_POR_MINUTO)) return;
+  if (consume(key, RATE_LIMIT_PER_MINUTE)) return;
 
-  const espera = reintentarEn(key);
-  res.set('Retry-After', String(espera));
+  const wait = retryAfter(key);
+  res.set('Retry-After', String(wait));
   throw new AppError(
-    `Has hecho demasiadas preguntas seguidas. Espera ${espera} segundos y vuelve a intentarlo.`,
+    `Has hecho demasiadas preguntas seguidas. Espera ${wait} segundos y vuelve a intentarlo.`,
     429,
     'RATE_LIMITED',
   );
@@ -160,7 +154,7 @@ router.post('/', async (req, res, next) => {
 
 router.post('/quick', async (req, res, next) => {
   try {
-    const message = readMessage(req.body, MENSAJE_MAXIMO_RAPIDO);
+    const message = readMessage(req.body, MAX_QUICK_MESSAGE_LENGTH);
     enforceRateLimit(req, res);
 
     const pregnancy = await repo.getPregnancy(req.user.id);

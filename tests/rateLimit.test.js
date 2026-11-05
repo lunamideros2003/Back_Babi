@@ -1,49 +1,49 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { consume, reintentarEn, olvidar, resetear } from '../src/utils/rateLimit.js';
+import { consume, retryAfter, forget, reset } from '../src/utils/rateLimit.js';
 
-test('deja pasar las primeras peticiones', () => {
-  resetear();
+test('lets the first requests through', () => {
+  reset();
   assert.equal(consume('chat:1', 3), true);
   assert.equal(consume('chat:1', 3), true);
   assert.equal(consume('chat:1', 3), true);
 });
 
-test('bloquea cuando se pasa el limite', () => {
-  resetear();
+test('blocks once the limit is exceeded', () => {
+  reset();
   consume('chat:2', 2);
   consume('chat:2', 2);
   assert.equal(consume('chat:2', 2), false);
 });
 
-test('cada clave lleva su propio contador', () => {
-  resetear();
+test('each key keeps its own counter', () => {
+  reset();
   consume('chat:3', 1);
   assert.equal(consume('chat:3', 1), false);
   assert.equal(consume('chat:4', 1), true);
 });
 
-test('indica cuanto falta para reintentar', () => {
-  resetear();
+test('reports how long until a retry is allowed', () => {
+  reset();
   consume('chat:5', 1);
-  const espera = reintentarEn('chat:5');
-  assert.ok(espera > 0 && espera <= 60, `espera inesperada: ${espera}`);
+  const wait = retryAfter('chat:5');
+  assert.ok(wait > 0 && wait <= 60, `unexpected wait: ${wait}`);
 });
 
-test('olvidar una clave reinicia su contador', () => {
-  resetear();
+test('forgetting a key resets its counter', () => {
+  reset();
   consume('chat:6', 1);
   assert.equal(consume('chat:6', 1), false);
-  olvidar('chat:6');
+  forget('chat:6');
   assert.equal(consume('chat:6', 1), true);
 });
 
-test('resetear vacia todos los contadores', () => {
-  resetear();
+test('reset clears every counter', () => {
+  reset();
   consume('chat:7', 1);
   consume('chat:8', 1);
-  resetear();
+  reset();
   assert.equal(consume('chat:7', 1), true);
   assert.equal(consume('chat:8', 1), true);
 });
