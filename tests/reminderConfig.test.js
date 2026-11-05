@@ -9,7 +9,7 @@ import {
   isRecurrence,
 } from '../src/config/reminders.js';
 
-test('todas las categorias tienen clave y etiqueta', () => {
+test('all categories have a key and a label', () => {
   assert.ok(REMINDER_CATEGORIES.length >= 5);
 
   for (const category of REMINDER_CATEGORIES) {
@@ -19,21 +19,21 @@ test('todas las categorias tienen clave y etiqueta', () => {
   }
 });
 
-test('reconoce solo las categorias de la lista', () => {
+test('recognizes only categories from the list', () => {
   assert.ok(isReminderCategory('parto'));
   assert.ok(isReminderCategory('emocional'));
   assert.ok(!isReminderCategory('inventada'));
   assert.ok(!isReminderCategory(undefined));
 });
 
-test('reconoce solo las recurrencias validas', () => {
+test('recognizes only valid recurrences', () => {
   for (const option of RECURRENCE_OPTIONS) assert.ok(isRecurrence(option));
 
   assert.ok(!isRecurrence('hourly'));
   assert.ok(!isRecurrence(null));
 });
 
-test('las claves salen de las categorias sin repetirse', () => {
+test('keys come from the categories without duplicates', () => {
   assert.deepEqual(
     REMINDER_KEYS,
     REMINDER_CATEGORIES.map((category) => category.key),

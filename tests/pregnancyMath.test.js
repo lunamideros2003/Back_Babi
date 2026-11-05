@@ -10,7 +10,7 @@ import {
   trimesterOf,
 } from '../src/utils/pregnancyMath.js';
 
-test('acepta las semanas que tienen contenido', () => {
+test('accepts weeks that have content', () => {
   assert.equal(parseWeekNumber(4), 4);
   assert.equal(parseWeekNumber('20'), 20);
   assert.equal(parseWeekNumber(40), 40);
@@ -18,7 +18,7 @@ test('acepta las semanas que tienen contenido', () => {
   assert.equal(LAST_WEEK, 40);
 });
 
-test('rechaza semanas fuera de rango o no enteras', () => {
+test('rejects out-of-range or non-integer weeks', () => {
   assert.equal(parseWeekNumber(3), null);
   assert.equal(parseWeekNumber(41), null);
   assert.equal(parseWeekNumber('37.5'), null);
@@ -27,7 +27,7 @@ test('rechaza semanas fuera de rango o no enteras', () => {
   assert.equal(parseWeekNumber(undefined), null);
 });
 
-test('sitúa cada semana en su trimestre', () => {
+test('places each week in its trimester', () => {
   assert.equal(trimesterOf(4), 1);
   assert.equal(trimesterOf(13), 1);
   assert.equal(trimesterOf(14), 2);
@@ -37,21 +37,21 @@ test('sitúa cada semana en su trimestre', () => {
   assert.equal(trimesterOf(null), null);
 });
 
-test('nombra el trimestre en espanol', () => {
+test('names the trimester in Spanish', () => {
   assert.equal(trimesterName(10), 'Primer trimestre');
   assert.equal(trimesterName(20), 'Segundo trimestre');
   assert.equal(trimesterName(37), 'Tercer trimestre');
   assert.equal(trimesterName('x'), null);
 });
 
-test('no calcula una fecha con una semana invalida', () => {
+test('does not calculate a date from an invalid week', () => {
   assert.equal(dueDateFromWeek('abc', '2026-01-01'), null);
   assert.equal(dueDateFromWeek(0, '2026-01-01'), null);
   assert.equal(dueDateFromWeek(43, '2026-01-01'), null);
   assert.equal(dueDateFromWeek(20.5, '2026-01-01'), null);
 });
 
-test('calcula la fecha probable desde una semana valida', () => {
+test('calculates the due date from a valid week', () => {
   assert.equal(dueDateFromWeek(20, '2026-01-01'), '2026-05-28');
   assert.equal(dueDateFromWeek(40, '2026-01-01'), '2026-01-08');
 });

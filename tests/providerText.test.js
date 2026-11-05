@@ -3,39 +3,39 @@ import assert from 'node:assert/strict';
 
 import { trimToLastSentence } from '../src/services/ai/openaiProvider.js';
 
-test('recorta una respuesta cortada a mitad de frase', () => {
-  const texto =
+test('trims a response cut mid-sentence', () => {
+  const text =
     'La alimentación variada es la base. Incluye proteínas magras y verduras. ' +
     'Evita los embutidos crudos porque pueden contener listeria y';
 
   assert.equal(
-    trimToLastSentence(texto),
+    trimToLastSentence(text),
     'La alimentación variada es la base. Incluye proteínas magras y verduras.',
   );
 });
 
-test('deja intacta una respuesta que ya termina', () => {
-  const texto = 'Come variado y bebe agua. Consulta siempre a tu obstetra.';
+test('leaves a response that already ends untouched', () => {
+  const text = 'Come variado y bebe agua. Consulta siempre a tu obstetra.';
 
-  assert.equal(trimToLastSentence(texto), texto);
+  assert.equal(trimToLastSentence(text), text);
 });
 
-test('no recorta si quedaria demasiado poco texto', () => {
-  const texto = 'Ok. Y después de eso hay una explicación larga sin punto final';
+test('does not trim when too little text would remain', () => {
+  const text = 'Ok. Y después de eso hay una explicación larga sin punto final';
 
-  assert.equal(trimToLastSentence(texto), texto);
+  assert.equal(trimToLastSentence(text), text);
 });
 
-test('tolera entradas vacias', () => {
+test('tolerates empty inputs', () => {
   assert.equal(trimToLastSentence(''), '');
   assert.equal(trimToLastSentence(null), '');
   assert.equal(trimToLastSentence(undefined), '');
 });
 
-test('reconoce preguntas y exclamaciones como final', () => {
-  const texto =
+test('recognizes question marks and exclamations as endings', () => {
+  const text =
     '¿Tienes alguna duda sobre lo que puedes comer? ' +
     'Escríbeme y lo vemos con calma sin cortar la frase';
 
-  assert.equal(trimToLastSentence(texto), '¿Tienes alguna duda sobre lo que puedes comer?');
+  assert.equal(trimToLastSentence(text), '¿Tienes alguna duda sobre lo que puedes comer?');
 });

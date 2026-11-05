@@ -17,15 +17,7 @@ const TABLAS = [
   'weeks',
 ];
 
-/*
-  Comprueba que ninguna tabla se queda abierta a la API publica de Supabase.
-
-  Sin Row Level Security, cualquiera con la clave anon del proyecto puede
-  leer y escribir las tablas sin pasar por el backend. El backend entra como
-  postgres, que ignora el RLS, asi que activarlo no le afecta.
-*/
-
-test('todas las tablas tienen RLS activo', async (t) => {
+test('all tables have RLS enabled', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
@@ -43,7 +35,7 @@ test('todas las tablas tienen RLS activo', async (t) => {
   assert.deepEqual(sinRls, [], `tablas sin RLS: ${sinRls.join(', ')}`);
 });
 
-test('el rol del backend puede leer las tablas ignorando el RLS', async (t) => {
+test('the backend role can read tables bypassing RLS', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
@@ -62,7 +54,7 @@ test('el rol del backend puede leer las tablas ignorando el RLS', async (t) => {
   );
 });
 
-test('cada tabla tiene su politica restrictiva', async (t) => {
+test('each table has its restrictive policy', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
@@ -79,14 +71,12 @@ test('cada tabla tiene su politica restrictiva', async (t) => {
   assert.deepEqual(faltantes, [], `tablas sin politica: ${faltantes.join(', ')}`);
 });
 
-test('el RLS bloquea el acceso directo por la API de Supabase', async (t) => {
+test('RLS blocks direct access through the Supabase API', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
   }
 
-  // La politica no permite nada a anon ni a authenticated, asi que la API
-  // publica de Supabase tiene que responder sin datos.
   const filas = await all(`
     SELECT tablename, qual AS usando, with_check AS comprobando
     FROM pg_policies WHERE schemaname = 'public'
@@ -103,7 +93,7 @@ test('el RLS bloquea el acceso directo por la API de Supabase', async (t) => {
   }
 });
 
-test('las tablas publicas siguen siendo las esperadas', async (t) => {
+test('public tables are still the expected ones', async (t) => {
   if (DRIVER !== 'postgres') {
     t.skip('necesita una base de datos Postgres');
     return;
