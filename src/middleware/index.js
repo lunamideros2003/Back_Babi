@@ -86,11 +86,6 @@ export function notFound(_req, _res, next) {
   next(new AppError('Ruta no encontrada.', 404, 'ROUTE_NOT_FOUND'));
 }
 
-/**
- * Express 4 does not catch rejected promises from async handlers, so a thrown
- * error inside an async route would take down the process instead of reaching
- * the error handler. This wraps every handler so failures become next(error).
- */
 function asyncHandler(handler) {
   if (handler.length >= 4) return handler;
   if (handler.name === 'asyncHandler') return handler;
@@ -107,7 +102,6 @@ function asyncHandler(handler) {
   return wrapped;
 }
 
-/** Applies asyncHandler to every route and middleware of a router. */
 export function asyncRouter(router) {
   for (const layer of router.stack ?? []) {
     if (layer.route?.stack) {
