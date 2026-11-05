@@ -1,7 +1,3 @@
-// Educational week-by-week content. Spanish is intentional: this is user-facing copy.
-// Structure per week: [week, title, summary, baby, mother, size, weight, length, tips, food, exercise, checkup]
-// Length is crown-rump until week 20 and crown-heel afterwards, which is why it
-// jumps from 15.3 cm to 25.6 cm. Weight, length and fruit are approximate means.
 const rows = [
   [4, 'Comienza la implantación', 'El blastocele ya se ha implantado en el endometrio y comienza a formar la placenta. Puede que todavía no te falte un periodo.', 'El embrión mide menos de 1 mm. El corazón aun no late de forma sostenida.', 'Sintomatología leve. Puede aparecer cansancio temprano o sensibilidad en los pechos.', 'una semilla de amapola', null, 'Menos de 1 mm', 'Toma ácido fólico de 400 a 800 mcg al dia. Evita alcohol, tabaco y cafeína en exceso.', 'Folatos, verduras de hoja verde y legumbres.', 'Sin restricción especial. Prioriza descanso.', 'Primera consulta obstetrica y prueba de embarazo confirmada.'],
   [5, 'Llega tu periodo y no aparece', 'El test de embarazo suele dar positivo. El corazón del embrión ya comienza a latir.', 'El embrión mide entre 1 y 2 mm. El tubo neural empieza a formarse.', 'Amenorrea, pechos sensibles, cansancio leve y pequenos calambres.', 'una semilla de sésamo', null, '1 a 2 mm', 'Registra la fecha de tu ultima menstruacion para calcular la fecha probable de parto.', 'Mantente hidratada. Sin alcohol.', 'Actividad suave segun tolerancia.', 'Calcula la fecha probable de parto: 280 dias desde el primer dia de tu ultima menstruacion.'],
