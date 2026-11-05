@@ -4,11 +4,6 @@ import { signToken } from '../utils/token.js';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../utils/errors.js';
 import { calculatePregnancy, toISODate, addDays } from '../utils/pregnancyMath.js';
 
-/**
- * Every function is async because the Postgres driver is network based. The
- * SQLite driver resolves immediately, so local development stays instant.
- */
-
 function toPublicUser(row) {
   if (!row) return null;
   return {
@@ -70,8 +65,6 @@ export async function updateProfile(userId, { name, dueDate }) {
 
   return await findById(userId);
 }
-
-/* ---------------------------------- pregnancy --------------------------------- */
 
 export async function getPregnancy(userId) {
   return await get('SELECT * FROM pregnancies WHERE user_id = :userId', { userId });
@@ -179,8 +172,6 @@ export async function pregnancySummary(userId) {
   };
 }
 
-/* --------------------------------- appointments -------------------------------- */
-
 export async function listAppointments(userId, { scope = 'all' } = {}) {
   if (scope === 'upcoming') {
     return await all(
@@ -261,8 +252,6 @@ export async function deleteAppointment(userId, id) {
   if (result.changes === 0) throw new NotFoundError('Cita');
 }
 
-/* ---------------------------------- reminders --------------------------------- */
-
 export async function listReminders(userId, { includeCompleted = false } = {}) {
   if (includeCompleted) {
     return await all(
@@ -318,8 +307,6 @@ export async function deleteReminder(userId, id) {
   if (result.changes === 0) throw new NotFoundError('Recordatorio');
 }
 
-/* ----------------------------------- diary ---------------------------------- */
-
 export async function listJournalEntries(userId, { limit = 50, offset = 0 } = {}) {
   return await all(
     `SELECT * FROM journal_entries WHERE user_id = :userId
@@ -362,8 +349,6 @@ export async function deleteJournalEntry(userId, id) {
   });
   if (result.changes === 0) throw new NotFoundError('Entrada del diario');
 }
-
-/* ------------------------------- health tracking ------------------------------ */
 
 export async function listCheckups(userId) {
   return await all(
