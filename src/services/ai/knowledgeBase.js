@@ -1,9 +1,3 @@
-// Curated educational content used by the local provider and injected as grounding
-// context into the LLM prompt. Spanish copy, no diagnostic claims.
-//
-// `question` and `keywords` stay without accents on purpose: they are compared
-// against what the person writes, which rarely comes with accents. `answer` is
-// text that a human reads, so it is written with correct Spanish.
 export const knowledgeBase = [
   {
     category: 'alimentacion',

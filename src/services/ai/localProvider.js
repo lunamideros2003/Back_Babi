@@ -79,11 +79,6 @@ function requestedWeek(message) {
   return match ? Number(match[1]) : null;
 }
 
-/**
- * Offline provider. Always available, zero cost, no API key required.
- * Gives the project a working AI experience out of the box and acts as the
- * fallback whenever the LLM call fails.
- */
 export async function localAnswer({ message, weekData, userName }) {
   const classification = classifyQuestion(message);
   const entry = asksAboutWeek(message) ? null : findBestEntry(message, classification.category);
