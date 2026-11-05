@@ -1,4 +1,3 @@
-// End-to-end smoke test against a running API. Run: node scripts/smoke.mjs
 const BASE = process.env.API_URL ?? 'http://localhost:4001/api';
 
 let passed = 0;
@@ -28,12 +27,12 @@ function check(label, condition, extra = '') {
 }
 
 const run = async () => {
-  console.log('\nBabyTrack IA - prueba de humo\n');
+  console.log('\nBabyTrack IA - smoke test\n');
 
   const health = await call('/health');
   check('health responde 200', health.status === 200);
   check('semanas cargadas', health.json.weeks_loaded >= 35, `(${health.json.weeks_loaded})`);
-  console.log(`       IA activa: ${health.json.ai?.active}`);
+  console.log(`       AI active: ${health.json.ai?.active}`);
 
   const weeks = await call('/weeks');
   check('lista de semanas', weeks.json.weeks?.length >= 35);
@@ -85,7 +84,7 @@ const run = async () => {
   check('chat responde', chat.status === 200, JSON.stringify(chat.json).slice(0, 200));
   check('categoria alimentacion', chat.json.reply?.category === 'alimentacion', chat.json.reply?.category);
   check('respuesta en espanol', /embarazo|cafeina|verdura|folico|lacteo/i.test(chat.json.reply?.content ?? ''));
-  console.log(`       proveedor: ${chat.json.reply?.provider}`);
+  console.log(`       provider: ${chat.json.reply?.provider}`);
 
   const chat2 = await call('/chat', {
     method: 'POST',
@@ -140,11 +139,11 @@ const run = async () => {
   const goodLogin = await call('/auth/login', { method: 'POST', body: { email, password: 'secreta123' } });
   check('login correcto 200', goodLogin.status === 200);
 
-  console.log(`\nResultado: ${passed} correctos, ${failed} fallidos\n`);
+  console.log(`\nResult: ${passed} passed, ${failed} failed\n`);
   process.exit(failed === 0 ? 0 : 1);
 };
 
 run().catch((error) => {
-  console.error('Error en la prueba:', error.message);
+  console.error('Test error:', error.message);
   process.exit(1);
 });

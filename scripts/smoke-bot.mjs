@@ -1,5 +1,3 @@
-// End-to-end test of the pregnancy questionnaire bot.
-// Run with the backend active: node scripts/smoke-bot.mjs
 const BASE = process.env.API_URL ?? 'http://localhost:4001/api';
 
 let passed = 0;
@@ -41,7 +39,7 @@ const ANSWERS = [
 ];
 
 const run = async () => {
-  console.log('\nBabyTrack IA - prueba del bot de preguntas\n');
+  console.log('\nBabyTrack IA - question bot test\n');
 
   const health = await call('/health');
   check('health responde 200', health.status === 200);
@@ -131,7 +129,7 @@ const run = async () => {
   const afterReset = await call('/bot/sessions', { token });
   check('sesiones borradas', afterReset.json.sessions?.length === 0, `${afterReset.json.sessions?.length}`);
 
-  console.log(`\nResultado: ${passed} correctos, ${failed} fallidos\n`);
+  console.log(`\nResult: ${passed} passed, ${failed} failed\n`);
   process.exit(failed === 0 ? 0 : 1);
 };
 
